@@ -12,12 +12,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Mail, Lock, LogIn } from "lucide-react";
+import { createClient } from "@/utils/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { toast } = useToast();
+  const supabase = createClient();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -29,30 +30,55 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // TODO: 실제 로그인 API 연동
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
 
-    console.log("로그인 시도:", formData);
-    setIsLoading(false);
+      if (error) {
+        toast.error("로그인 실패", {
+          description:
+            error.message === "Invalid login credentials" ? "이메일 또는 비밀번호가 올바르지 않습니다" : error.message,
+        });
+        return;
+      }
 
-    toast({
-      title: "로그인 성공",
-      description: "트래비에 오신 것을 환영합니다!",
-    });
+      toast.success("로그인 성공", {
+        description: "트래비에 오신 것을 환영합니다!",
+      });
 
-    // 로그인 성공 후 마이페이지로 이동
-    router.push("/my");
+      // 로그인 성공 후 마이페이지로 이동
+      router.push("/my");
+      router.refresh();
+    } catch (error) {
+      toast.error("오류 발생", {
+        description: "로그인 중 오류가 발생했습니다. 다시 시도해주세요.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSocialLogin = (provider: string) => {
-    console.log(`${provider} 로그인 시도`);
+  const handleSocialLogin = async (provider: "google" | "kakao") => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
-    toast({
-      title: `${provider} 로그인`,
-      description: "소셜 로그인 기능은 실제 배포 시 활성화됩니다.",
-    });
-
-    // TODO: 소셜 로그인 API 연동
+      if (error) {
+        toast.error(`${provider} 로그인 실패`, {
+          description: error.message,
+        });
+      }
+    } catch {
+      toast.error("오류 발생", {
+        description: "소셜 로그인 중 오류가 발생했습니다.",
+      });
+    }
   };
 
   return (
@@ -69,7 +95,7 @@ export default function LoginPage() {
           <CardContent className="space-y-6">
             {/* 소셜 로그인 */}
             <div className="space-y-3">
-              <Button
+              {/* <Button
                 type="button"
                 variant="outline"
                 className="w-full h-11 bg-transparent"
@@ -81,21 +107,7 @@ export default function LoginPage() {
                   </div>
                   <span>카카오로 시작하기</span>
                 </div>
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-11 bg-transparent"
-                onClick={() => handleSocialLogin("naver")}
-              >
-                <div className="flex items-center justify-center gap-3">
-                  <div className="flex h-5 w-5 items-center justify-center rounded bg-[#03C75A]">
-                    <span className="text-xs font-bold text-white">N</span>
-                  </div>
-                  <span>네이버로 시작하기</span>
-                </div>
-              </Button>
+              </Button> */}
 
               <Button
                 type="button"

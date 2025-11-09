@@ -2,19 +2,29 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "next/navigation";
 
 export function Header() {
   const [open, setOpen] = useState(false);
+  const { user, loading, signOut } = useAuth();
+  const router = useRouter();
 
   const mainNavLinks = [
     { href: "/explore", label: "여행지 둘러보기" },
     { href: "/budget", label: "예산 계산기" },
     { href: "/guide", label: "여행 가이드" },
   ];
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -39,12 +49,28 @@ export function Header() {
               ))}
             </nav>
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/login">로그인</Link>
-              </Button>
-              <Button size="sm" asChild>
-                <Link href="/signup">회원가입</Link>
-              </Button>
+              {loading ? (
+                <div className="h-8 w-32 animate-pulse bg-accent rounded" />
+              ) : user ? (
+                <>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href="/my">마이페이지</Link>
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleSignOut}>
+                    <LogOut className="h-4 w-4 mr-1" />
+                    로그아웃
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href="/login">로그인</Link>
+                  </Button>
+                  <Button size="sm" asChild>
+                    <Link href="/signup">회원가입</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
@@ -71,16 +97,41 @@ export function Header() {
                   ))}
                 </div>
                 <div className="flex flex-col gap-3 pt-6 border-t">
-                  <Button variant="outline" size="lg" asChild>
-                    <Link href="/login" onClick={() => setOpen(false)}>
-                      로그인
-                    </Link>
-                  </Button>
-                  <Button size="lg" asChild>
-                    <Link href="/signup" onClick={() => setOpen(false)}>
-                      회원가입
-                    </Link>
-                  </Button>
+                  {loading ? (
+                    <div className="h-11 animate-pulse bg-accent rounded" />
+                  ) : user ? (
+                    <>
+                      <Button variant="outline" size="lg" asChild>
+                        <Link href="/my" onClick={() => setOpen(false)}>
+                          마이페이지
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={() => {
+                          handleSignOut();
+                          setOpen(false);
+                        }}
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        로그아웃
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="outline" size="lg" asChild>
+                        <Link href="/login" onClick={() => setOpen(false)}>
+                          로그인
+                        </Link>
+                      </Button>
+                      <Button size="lg" asChild>
+                        <Link href="/signup" onClick={() => setOpen(false)}>
+                          회원가입
+                        </Link>
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </SheetContent>
