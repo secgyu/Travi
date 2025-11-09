@@ -30,11 +30,6 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                  요금제
-                </Link>
-              </li>
-              <li>
                 <Link
                   href="/ai-intro"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -43,7 +38,10 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+                <Link
+                  href="/partnership"
+                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                >
                   파트너십
                 </Link>
               </li>
@@ -69,11 +67,6 @@ export function Footer() {
                   1:1 문의
                 </Link>
               </li>
-              <li>
-                <Link href="#" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                  피드백
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -94,11 +87,6 @@ export function Footer() {
               <li>
                 <Link href="/cookies" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
                   쿠키 정책
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-                  환불 정책
                 </Link>
               </li>
             </ul>
