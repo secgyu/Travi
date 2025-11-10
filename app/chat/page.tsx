@@ -4,8 +4,8 @@ import type React from "react";
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useState, useRef, useEffect } from "react";
-import { Send, Loader2, ArrowLeft } from "lucide-react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { Send, ArrowLeft, MapPin, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,9 +18,37 @@ export default function ChatPage() {
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage } = useChat({
     transport: new DefaultChatTransport({ api: "/api/chat" }),
   });
+
+  // 여행 일정이 완성되었는지 계산
+  const showResultsButton = useMemo(() => {
+    if (messages.length >= 2) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === "assistant") {
+        const messageText = lastMessage.parts
+          .filter((part) => part.type === "text")
+          .map((part) => {
+            if ("text" in part) {
+              return part.text;
+            }
+            return "";
+          })
+          .join("");
+
+        // 여행 일정이 포함되어 있는지 확인 (간단한 키워드 검색)
+        return (
+          messageText.includes("일차") ||
+          messageText.includes("1일") ||
+          messageText.includes("Day") ||
+          messageText.includes("오전") ||
+          messageText.includes("오후")
+        );
+      }
+    }
+    return false;
+  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -34,7 +62,7 @@ export default function ChatPage() {
     const destination = searchParams.get("destination");
     const dates = searchParams.get("dates");
 
-    if (destination && messages.length === 0 && status === "ready") {
+    if (destination && messages.length === 0) {
       let initialMessage = `${destination}`;
       if (dates) {
         initialMessage += ` ${dates}`;
@@ -43,18 +71,17 @@ export default function ChatPage() {
 
       sendMessage({ text: initialMessage });
     }
-  }, [searchParams, messages.length, status, sendMessage]);
+  }, [searchParams, messages.length, sendMessage]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim() || status === "in_progress") return;
+    if (!inputValue.trim()) return;
 
     sendMessage({ text: inputValue });
     setInputValue("");
   };
 
   const handleQuickReply = (text: string) => {
-    if (status === "in_progress") return;
     sendMessage({ text });
   };
 
@@ -151,14 +178,27 @@ export default function ChatPage() {
               </div>
             ))}
 
-            {/* Loading indicator */}
-            {status === "in_progress" && (
-              <div className="flex justify-start">
-                <div className="rounded-2xl bg-card px-4 py-3 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    <span className="text-sm text-muted-foreground">트래비가 생각 중...</span>
+            {/* Results button */}
+            {showResultsButton && (
+              <div className="flex justify-center animate-in fade-in slide-in-from-bottom-4">
+                <div className="w-full max-w-md space-y-4">
+                  <div className="rounded-2xl bg-gradient-to-r from-primary/10 to-secondary/10 border-2 border-primary/20 p-6 text-center">
+                    <Sparkles className="mx-auto mb-3 h-12 w-12 text-primary animate-pulse" />
+                    <h3 className="mb-2 text-lg font-bold text-foreground">여행 일정이 완성되었습니다!</h3>
+                    <p className="mb-4 text-sm text-muted-foreground">
+                      지도에서 경로를 확인하고, 일정을 수정하거나 저장할 수 있습니다
+                    </p>
+                    <Button
+                      onClick={() => router.push("/results")}
+                      className="w-full gap-2 rounded-xl bg-primary py-6 text-base font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                    >
+                      <MapPin className="h-5 w-5" />
+                      지도에서 일정 확인하기
+                    </Button>
                   </div>
+                  <p className="text-center text-xs text-muted-foreground">
+                    계속 대화하거나 위 버튼을 눌러 상세 일정을 확인하세요
+                  </p>
                 </div>
               </div>
             )}
@@ -175,16 +215,15 @@ export default function ChatPage() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="메시지를 입력하세요..."
-                disabled={status === "in_progress"}
                 className="h-12 rounded-xl bg-background"
               />
               <Button
                 type="submit"
                 size="icon"
-                disabled={!inputValue.trim() || status === "in_progress"}
+                disabled={!inputValue.trim()}
                 className="h-12 w-12 rounded-xl bg-primary"
               >
-                {status === "in_progress" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                <Send className="h-5 w-5" />
               </Button>
             </form>
             <p className="mt-2 text-center text-xs text-muted-foreground">

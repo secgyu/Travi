@@ -1,15 +1,17 @@
-import { consumeStream, convertToModelMessages, streamText, type UIMessage } from "ai"
+import { openai } from "@ai-sdk/openai";
+import { consumeStream, convertToModelMessages, streamText, type UIMessage } from "ai";
 
-export const maxDuration = 30
+export const maxDuration = 30;
 
 export async function POST(req: Request) {
-  const { messages }: { messages: UIMessage[] } = await req.json()
+  try {
+    const { messages }: { messages: UIMessage[] } = await req.json();
 
-  const prompt = convertToModelMessages(messages)
+    const prompt = convertToModelMessages(messages);
 
-  const systemMessage = {
-    role: "system" as const,
-    content: `당신은 트래비(Travee)의 AI 여행 플래너입니다. 
+    const systemMessage = {
+      role: "system" as const,
+      content: `당신은 트래비(Travee)의 AI 여행 플래너입니다. 
 사용자와 친근하게 대화하며 여행 계획을 도와주세요.
 
 다음 정보를 순서대로 물어보세요:
@@ -23,20 +25,24 @@ export async function POST(req: Request) {
 간단한 3일치 여행 일정을 생성해주세요.
 
 한국어로 답변하고, 이모지를 적절히 사용하며, 친근하고 도움이 되는 톤으로 대화하세요.`,
+    };
+
+    const result = streamText({
+      model: openai("gpt-4o-mini"),
+      messages: [systemMessage, ...prompt],
+      abortSignal: req.signal,
+    });
+
+    return result.toUIMessageStreamResponse({
+      onFinish: async ({ isAborted }) => {
+        if (isAborted) {
+          console.log("[travi] Chat stream aborted");
+        }
+      },
+      consumeSseStream: consumeStream,
+    });
+  } catch (error) {
+    console.error("Chat API error:", error);
+    return new Response("Internal Server Error", { status: 500 });
   }
-
-  const result = streamText({
-    model: "openai/gpt-4o-mini",
-    messages: [systemMessage, ...prompt],
-    abortSignal: req.signal,
-  })
-
-  return result.toUIMessageStreamResponse({
-    onFinish: async ({ isAborted }) => {
-      if (isAborted) {
-        console.log("[v0] Chat stream aborted")
-      }
-    },
-    consumeSseStream: consumeStream,
-  })
 }

@@ -266,7 +266,7 @@ RESEND_API_KEY=
 ### Phase 1: 핵심 기능 (1-2주)
 
 1. ✅ Supabase 인증 (완료)
-2. AI 챗봇 API 연동
+2. ✅ AI 챗봇 API 연동
 3. DB 스키마 생성
 4. 여행 계획 저장/불러오기
 
