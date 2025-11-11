@@ -5,7 +5,7 @@ import type React from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Send, ArrowLeft, MapPin, Sparkles } from "lucide-react";
+import { Send, MapPin, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,8 +88,8 @@ export default function ChatPage() {
   return (
     <>
       <Header />
-      <div className="flex min-h-screen flex-col bg-gradient-to-b from-accent/30 via-background to-background">
-        {/* Header */}
+      <div className="relative flex h-[calc(100vh-65px)] flex-col bg-gradient-to-b from-accent/30 via-background to-background">
+        {/* Header
         <div className="border-b bg-card/50 backdrop-blur-sm">
           <div className="mx-auto flex max-w-4xl items-center gap-4 px-4 py-4">
             <Button variant="ghost" size="icon" onClick={() => router.push("/")}>
@@ -103,11 +103,11 @@ export default function ChatPage() {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-6">
-          <div className="mx-auto max-w-4xl space-y-6">
+        <div className="flex-1 px-4 py-6 pb-28 overflow-y-auto">
+          <div className="mx-auto max-w-4xl space-y-6 min-h-0">
             {/* Welcome message */}
             {messages.length === 0 && (
               <div className="text-center">
@@ -208,7 +208,7 @@ export default function ChatPage() {
         </div>
 
         {/* Input form */}
-        <div className="border-t bg-card/50 backdrop-blur-sm">
+        <div className="fixed bottom-0 left-0 right-0 border-t bg-card/95 backdrop-blur-sm">
           <div className="mx-auto max-w-4xl px-4 py-4">
             <form onSubmit={handleSubmit} className="flex gap-2">
               <Input
