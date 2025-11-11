@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -13,15 +13,38 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Camera, Save, AlertTriangle } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
 export default function SettingsPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const supabase = createClient();
+
   const [profileData, setProfileData] = useState({
-    name: "김민지",
-    email: "minji@example.com",
+    name: "",
+    email: "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
+
+  // 사용자 데이터 로드
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/login");
+      return;
+    }
+
+    if (user) {
+      setProfileData((prev) => ({
+        ...prev,
+        name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "",
+        email: user.email || "",
+      }));
+    }
+  }, [user, loading, router]);
 
   const [notifications, setNotifications] = useState({
     emailMarketing: true,
@@ -29,26 +52,75 @@ export default function SettingsPage() {
     pushNotifications: false,
   });
 
-  const handleProfileSave = () => {
-    console.log("프로필 저장:", profileData);
-    // TODO: API 연동
+  const handleProfileSave = async () => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        email: profileData.email,
+        data: {
+          full_name: profileData.name,
+        },
+      });
+
+      if (error) throw error;
+
+      alert("프로필이 성공적으로 저장되었습니다!");
+    } catch (error) {
+      console.error("프로필 저장 오류:", error);
+      alert("프로필 저장에 실패했습니다. 다시 시도해주세요.");
+    }
   };
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
     if (profileData.newPassword !== profileData.confirmPassword) {
       alert("새 비밀번호가 일치하지 않습니다");
       return;
     }
-    console.log("비밀번호 변경");
-    // TODO: API 연동
-  };
 
-  const handleAccountDelete = () => {
-    if (confirm("정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
-      console.log("계정 삭제");
-      // TODO: API 연동
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: profileData.newPassword,
+      });
+
+      if (error) throw error;
+
+      alert("비밀번호가 성공적으로 변경되었습니다!");
+      setProfileData({
+        ...profileData,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error) {
+      console.error("비밀번호 변경 오류:", error);
+      alert("비밀번호 변경에 실패했습니다. 다시 시도해주세요.");
     }
   };
+
+  const handleAccountDelete = async () => {
+    if (confirm("정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
+      try {
+        alert("계정 삭제는 고객센터로 문의해주세요.");
+        // TODO: 서버 API 엔드포인트를 통한 계정 삭제 구현
+      } catch (error) {
+        console.error("계정 삭제 오류:", error);
+        alert("계정 삭제에 실패했습니다. 고객센터로 문의해주세요.");
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-accent/20 via-background to-background">
+        <Header />
+        <main className="container mx-auto px-4 py-12">
+          <div className="mx-auto max-w-4xl text-center">
+            <p className="text-muted-foreground">로딩 중...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/20 via-background to-background">
@@ -84,8 +156,8 @@ export default function SettingsPage() {
                   {/* 프로필 사진 */}
                   <div className="flex items-center gap-6">
                     <Avatar className="h-24 w-24">
-                      <AvatarImage src="/user-avatar.jpg" alt="프로필 사진" />
-                      <AvatarFallback>김</AvatarFallback>
+                      <AvatarImage src={user?.user_metadata?.avatar_url || "/user-avatar.jpg"} alt="프로필 사진" />
+                      <AvatarFallback>{profileData.name?.[0] || "U"}</AvatarFallback>
                     </Avatar>
                     <div>
                       <Button variant="outline" size="sm" className="gap-2 bg-transparent">
