@@ -73,6 +73,7 @@ export function TravelHero() {
                   onKeyPress={handleKeyPress}
                   placeholder="도쿄, 오사카, 방콕, 파리..."
                   className="h-12 border-0 pl-10 text-base bg-transparent focus-visible:ring-0"
+                  disabled
                 />
               </div>
 
@@ -84,6 +85,7 @@ export function TravelHero() {
                   onKeyPress={handleKeyPress}
                   placeholder="출발일 - 도착일"
                   className="h-12 border-0 pl-10 text-base bg-transparent focus-visible:ring-0"
+                  disabled
                 />
               </div>
             </div>
