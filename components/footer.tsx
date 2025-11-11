@@ -98,7 +98,7 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <a
-                  href="#"
+                  href="https://www.instagram.com/"
                   className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <Instagram className="h-4 w-4" />
@@ -107,7 +107,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="https://www.youtube.com/"
                   className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <Youtube className="h-4 w-4" />
