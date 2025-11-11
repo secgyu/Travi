@@ -149,12 +149,6 @@ export function Logo({ variant = "full", size = "md", className, showAnimation =
         >
           트래비
         </span>
-        <span
-          className="text-[0.6em] font-medium text-muted-foreground mt-0.5 leading-none"
-          style={{ fontFamily: "Pretendard, sans-serif" }}
-        >
-          Travi
-        </span>
       </div>
     </div>
   );
