@@ -7,15 +7,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Settings, MapPin, Calendar, Heart, Clock, Edit, Trash2, Share2 } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
 
-export default function MyPage() {
-  // TODO: 실제 사용자 데이터로 교체
+export default async function MyPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { user: authUser },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !authUser) {
+    redirect("/login");
+  }
+
   const user = {
-    name: "김민지",
-    email: "minji@example.com",
-    profileImage: "/user-avatar.jpg",
-    travelStyle: "미식 & 문화 탐방",
-    memberSince: "2025년 1월",
+    name:
+      authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split("@")[0] || "사용자",
+    email: authUser.email || "",
+    profileImage: authUser.user_metadata?.avatar_url || "/user-avatar.jpg",
+    travelStyle: authUser.user_metadata?.travel_style || "미식 & 문화 탐방",
+    memberSince: new Date(authUser.created_at).toLocaleDateString("ko-KR", { year: "numeric", month: "long" }),
   };
 
   const trips = [
