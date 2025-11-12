@@ -77,9 +77,7 @@ export default function SignupPage() {
 
       if (error) {
         toast.error("회원가입 실패", {
-          description: error.message === "User already registered"
-            ? "이미 가입된 이메일입니다"
-            : error.message,
+          description: error.message === "User already registered" ? "이미 가입된 이메일입니다" : error.message,
         });
         return;
       }
@@ -99,7 +97,7 @@ export default function SignupPage() {
     }
   };
 
-  const handleSocialSignup = async (provider: 'google' | 'kakao') => {
+  const handleSocialSignup = async (provider: "google" | "kakao") => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provider,
@@ -174,6 +172,19 @@ export default function SignupPage() {
                     />
                   </svg>
                   <span>구글로 시작하기</span>
+                </div>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-11 bg-transparent"
+                onClick={() => handleSocialSignup("kakao")}
+              >
+                <div className="flex items-center justify-center gap-3">
+                  <div className="flex h-5 w-5 items-center justify-center rounded bg-[#FEE500]">
+                    <span className="text-xs font-bold text-[#000000]">K</span>
+                  </div>
+                  <span>카카오로 시작하기</span>
                 </div>
               </Button>
             </div>
