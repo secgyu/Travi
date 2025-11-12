@@ -6,8 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { BookOpen, Search, TrendingUp, Plane, Wallet, MapPin, Languages, FileText } from "lucide-react";
+import { getAllGuides } from "@/lib/mdx";
 
-export default function GuidePage() {
+export default async function GuidePage() {
+  const allGuides = await getAllGuides();
+
+  const guides = allGuides.map((guide) => ({
+    id: guide.slug,
+    title: guide.metadata.title,
+    description: guide.metadata.description,
+    category: guide.metadata.category,
+    image: guide.metadata.image,
+    readTime: guide.metadata.readTime,
+    views: guide.metadata.views,
+    tags: guide.metadata.tags,
+  }));
   const categories = [
     { id: "visa", label: "비자", icon: FileText, count: 12 },
     { id: "money", label: "환전", icon: Wallet, count: 8 },
@@ -16,70 +29,11 @@ export default function GuidePage() {
     { id: "preparation", label: "여행 준비", icon: Plane, count: 18 },
   ];
 
-  const guides = [
-    {
-      id: "japan-visa",
-      title: "일본 비자 신청 완벽 가이드",
-      description: "일본 여행을 위한 비자 신청 절차와 필요 서류를 상세히 안내합니다",
-      category: "비자",
-      image: "https://images.unsplash.com/photo-1492571350019-22de08371fd3?w=500&q=80",
-      readTime: "5분",
-      views: "12.5K",
-      tags: ["일본", "비자", "필수"],
-    },
-    {
-      id: "tokyo-subway",
-      title: "도쿄 지하철 이용법 A to Z",
-      description: "복잡한 도쿄 지하철, 이 가이드 하나면 충분합니다",
-      category: "교통",
-      image: "https://images.unsplash.com/photo-1555041469-a586c6196ba5?w=500&q=80",
-      readTime: "8분",
-      views: "18.2K",
-      tags: ["도쿄", "지하철", "교통패스"],
-    },
-    {
-      id: "currency-exchange",
-      title: "환전은 어디서? 최저 수수료 찾기",
-      description: "은행, 공항, 환전소, 카드... 가장 유리한 환전 방법을 알려드립니다",
-      category: "환전",
-      image: "https://images.unsplash.com/photo-1580519542036-c47de6196ba5?w=500&q=80",
-      readTime: "6분",
-      views: "25.3K",
-      tags: ["환전", "수수료", "절약"],
-    },
-    {
-      id: "packing-checklist",
-      title: "해외여행 필수품 체크리스트",
-      description: "빠뜨리면 안 되는 여행 필수품 총정리",
-      category: "여행 준비",
-      image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=500&q=80",
-      readTime: "4분",
-      views: "32.1K",
-      tags: ["짐싸기", "체크리스트", "필수템"],
-    },
-    {
-      id: "tipping-culture",
-      title: "나라별 팁 문화 완벽 정리",
-      description: "팁을 줘야 할까? 얼마나 줘야 할까? 나라별 팁 문화를 알아봅니다",
-      category: "문화",
-      image: "https://images.unsplash.com/photo-1518897488648-5eae4ac6686b?w=500&q=80",
-      readTime: "7분",
-      views: "15.7K",
-      tags: ["팁", "문화", "에티켓"],
-    },
-    {
-      id: "sim-card-guide",
-      title: "해외 데이터 로밍 vs 유심 비교",
-      description: "로밍? 유심? eSIM? 해외에서 인터넷 사용하는 가장 좋은 방법",
-      category: "여행 준비",
-      image: "https://images.unsplash.com/photo-1471897488648-5eae4ac6686b?w=500&q=80",
-      readTime: "6분",
-      views: "22.8K",
-      tags: ["인터넷", "로밍", "유심"],
-    },
-  ];
-
-  const popularGuides = guides.filter((g) => Number.parseInt(g.views) > 20000);
+  // 인기 가이드 필터링 (조회수 기준)
+  const popularGuides = guides.filter((g) => {
+    const viewsNum = parseFloat(g.views.replace(/[^0-9.]/g, ""));
+    return viewsNum > 20000;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/20 via-background to-background">
