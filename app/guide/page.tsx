@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { BookOpen, Search, TrendingUp, Plane, Wallet, MapPin, Languages, FileText } from "lucide-react";
+import { BookOpen, Search, Plane, Wallet, MapPin, Languages, FileText } from "lucide-react";
 import { getAllGuides } from "@/lib/mdx";
 
 export default async function GuidePage() {
@@ -18,7 +18,6 @@ export default async function GuidePage() {
     category: guide.metadata.category,
     image: guide.metadata.image,
     readTime: guide.metadata.readTime,
-    views: guide.metadata.views,
     tags: guide.metadata.tags,
   }));
   const categories = [
@@ -28,12 +27,6 @@ export default async function GuidePage() {
     { id: "culture", label: "문화", icon: Languages, count: 10 },
     { id: "preparation", label: "여행 준비", icon: Plane, count: 18 },
   ];
-
-  // 인기 가이드 필터링 (조회수 기준)
-  const popularGuides = guides.filter((g) => {
-    const viewsNum = parseFloat(g.views.replace(/[^0-9.]/g, ""));
-    return viewsNum > 20000;
-  });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/20 via-background to-background">
@@ -73,50 +66,6 @@ export default async function GuidePage() {
           ))}
         </div>
 
-        <div className="mb-16">
-          <div className="mb-6 flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            <h2 className="text-2xl font-bold text-foreground">인기 가이드</h2>
-            <Badge variant="secondary" className="ml-2">
-              HOT
-            </Badge>
-          </div>
-
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {popularGuides.map((guide) => (
-              <Card
-                key={guide.id}
-                className="group overflow-hidden border-0 shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-              >
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={guide.image || "/placeholder.svg"}
-                    alt={guide.title}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <Badge className="absolute left-4 top-4 bg-primary">{guide.category}</Badge>
-                </div>
-                <CardContent className="p-6">
-                  <h3 className="mb-2 text-lg font-bold text-foreground line-clamp-2">{guide.title}</h3>
-                  <p className="mb-4 text-sm text-foreground/70 line-clamp-2">{guide.description}</p>
-                  <div className="mb-4 flex flex-wrap gap-2">
-                    {guide.tags.map((tag, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>읽는 시간 {guide.readTime}</span>
-                    <span>조회수 {guide.views}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
         <div className="mb-8">
           <h2 className="mb-6 text-2xl font-bold text-foreground">전체 가이드</h2>
 
@@ -139,15 +88,12 @@ export default async function GuidePage() {
                     </div>
                     <h3 className="mb-2 text-lg font-bold text-foreground line-clamp-2">{guide.title}</h3>
                     <p className="mb-auto text-sm text-foreground/70 line-clamp-2">{guide.description}</p>
-                    <div className="mt-4 flex flex-wrap gap-2 mb-3">
+                    <div className="mt-4 flex flex-wrap gap-2">
                       {guide.tags.map((tag, idx) => (
                         <Badge key={idx} variant="secondary" className="text-xs">
                           {tag}
                         </Badge>
                       ))}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">조회수 {guide.views}</span>
                     </div>
                   </CardContent>
                 </Card>

@@ -5,7 +5,7 @@ import { Footer } from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, Eye, Clock, Share2, Bookmark, ChevronRight } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Share2, Bookmark, ChevronRight } from "lucide-react";
 import { getGuide, getAllGuideSlugs } from "@/lib/mdx";
 import { compileMDX } from "next-mdx-remote/rsc";
 
@@ -64,10 +64,6 @@ export default async function GuideDetailPage({ params }: { params: Promise<{ sl
             <div className="flex items-center gap-1">
               <Clock className="h-4 w-4" />
               {metadata.readTime} 읽기
-            </div>
-            <div className="flex items-center gap-1">
-              <Eye className="h-4 w-4" />
-              조회수 {metadata.views}
             </div>
             <div className="flex items-center gap-1">작성자: {metadata.author}</div>
           </div>
