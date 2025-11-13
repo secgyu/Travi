@@ -5,10 +5,11 @@ import { Footer } from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, Clock, Share2, Bookmark, ChevronRight } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Share2, Bookmark } from "lucide-react";
 import { getGuide, getAllGuideSlugs } from "@/lib/mdx";
 import { compileMDX } from "next-mdx-remote/rsc";
 import mdxComponents from "@/components/mdx-content";
+import { GuideTableOfContents } from "@/components/guide-toc";
 
 export async function generateStaticParams() {
   const slugs = await getAllGuideSlugs();
@@ -98,28 +99,7 @@ export default async function GuideDetailPage({ params }: { params: Promise<{ sl
           />
         </div>
 
-        <div className="mb-12 rounded-xl border border-border bg-card p-6 shadow-sm">
-          <div className="mb-4 flex items-center gap-2">
-            <div className="rounded-lg bg-primary/10 p-2">
-              <ChevronRight className="h-5 w-5 text-primary" />
-            </div>
-            <h2 className="text-xl font-bold text-foreground">목차</h2>
-          </div>
-          <nav className="space-y-3">
-            {tableOfContents.map((item, idx) => (
-              <a
-                key={item.id}
-                href={`#${item.id}`}
-                className="group flex items-start gap-3 rounded-lg px-3 py-2 text-foreground/80 transition-all hover:bg-accent hover:text-primary"
-              >
-                <span className="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                  {idx + 1}
-                </span>
-                <span className="text-sm font-medium leading-relaxed">{item.text}</span>
-              </a>
-            ))}
-          </nav>
-        </div>
+        <GuideTableOfContents items={tableOfContents} />
 
         <div className="space-y-8">{MDXContent}</div>
 
