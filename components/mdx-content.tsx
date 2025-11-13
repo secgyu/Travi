@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, AlertCircle, Lightbulb, Info } from "lucide-react";
 import { ReactNode } from "react";
 
-function createMDXComponents() {
+export function createMDXComponents() {
   let headingCounter = 0;
 
   return {
@@ -130,5 +130,3 @@ function createMDXComponents() {
     td: ({ children }: { children: ReactNode }) => <td className="border border-border p-2">{children}</td>,
   };
 }
-
-export default createMDXComponents();

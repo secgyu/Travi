@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar, Clock, Share2, Bookmark } from "lucide-react";
 import { getGuide, getAllGuideSlugs } from "@/lib/mdx";
 import { compileMDX } from "next-mdx-remote/rsc";
-import mdxComponents from "@/components/mdx-content";
+import { createMDXComponents } from "@/components/mdx-content";
 import { GuideTableOfContents } from "@/components/guide-toc";
 
 export async function generateStaticParams() {
@@ -29,7 +29,7 @@ export default async function GuideDetailPage({ params }: { params: Promise<{ sl
     options: {
       parseFrontmatter: false,
     },
-    components: mdxComponents,
+    components: createMDXComponents(),
   });
 
   const headings = content
