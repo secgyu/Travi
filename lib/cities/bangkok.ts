@@ -6,7 +6,7 @@ export const bangkok: CityData = {
   region: "아시아",
   emoji: "🛕",
   description: "황금 사원과 열대의 활력이 넘치는 도시. 저렴한 물가와 맛있는 음식, 활기찬 야시장이 매력입니다.",
-  heroImage: "/bangkok-temple.jpg",
+  heroImage: "https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=800&q=80",
   images: [
     "https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=500&q=80",
     "https://images.unsplash.com/photo-1528181304800-259b08848526?w=500&q=80",

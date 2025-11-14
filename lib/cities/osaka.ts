@@ -6,7 +6,7 @@ export const osaka: CityData = {
   region: "아시아",
   emoji: "🏯",
   description: "일본의 부엌이라 불리는 미식의 도시. 친근하고 활기찬 분위기의 상업 중심지입니다.",
-  heroImage: "/osaka-food.jpg",
+  heroImage: "https://images.unsplash.com/photo-1590559899731-a382839e5549?w=800&q=80",
   images: [
     "https://images.unsplash.com/photo-1590559899731-a382839e5549?w=500&q=80",
     "https://images.unsplash.com/photo-1589452271712-64b8a66c7b71?w=500&q=80",

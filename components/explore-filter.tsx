@@ -12,7 +12,6 @@ interface Destination {
   city: string;
   slug: string;
   country: string;
-  emoji: string;
   description: string;
   image: string;
   tags: string[];
@@ -30,7 +29,6 @@ export function ExploreFilter({ destinations }: ExploreFilterProps) {
   const [selectedBudget, setSelectedBudget] = useState<string>("전체");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // 지역 목록 및 카운트
   const regions = useMemo(() => {
     const regionMap = new Map<string, number>();
     regionMap.set("전체", destinations.length);
@@ -42,7 +40,6 @@ export function ExploreFilter({ destinations }: ExploreFilterProps) {
     return regionMap;
   }, [destinations]);
 
-  // 예산 범위 정의
   const budgetRanges = useMemo(() => {
     const ranges = new Map<string, number>();
     ranges.set("전체", destinations.length);
@@ -61,15 +58,12 @@ export function ExploreFilter({ destinations }: ExploreFilterProps) {
     return ranges;
   }, [destinations]);
 
-  // 필터링된 여행지
   const filteredDestinations = useMemo(() => {
     return destinations.filter((dest) => {
-      // 지역 필터
       if (selectedRegion !== "전체" && dest.region !== selectedRegion) {
         return false;
       }
 
-      // 예산 필터
       if (selectedBudget !== "전체") {
         const budget = parseInt(dest.avgBudget.replace(/[^0-9]/g, ""));
         if (selectedBudget === "저렴" && budget >= 600000) return false;
@@ -77,7 +71,6 @@ export function ExploreFilter({ destinations }: ExploreFilterProps) {
         if (selectedBudget === "고가" && budget < 1200000) return false;
       }
 
-      // 검색 필터
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         return (
@@ -94,7 +87,6 @@ export function ExploreFilter({ destinations }: ExploreFilterProps) {
 
   return (
     <div>
-      {/* 검색 바 */}
       <div className="mb-8">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -108,7 +100,6 @@ export function ExploreFilter({ destinations }: ExploreFilterProps) {
         </div>
       </div>
 
-      {/* 지역 필터 */}
       <div className="mb-6">
         <h3 className="mb-3 text-sm font-semibold text-foreground">지역</h3>
         <div className="flex flex-wrap gap-2">
@@ -127,7 +118,6 @@ export function ExploreFilter({ destinations }: ExploreFilterProps) {
         </div>
       </div>
 
-      {/* 예산 필터 */}
       <div className="mb-8">
         <h3 className="mb-3 text-sm font-semibold text-foreground">예산</h3>
         <div className="flex flex-wrap gap-2">
@@ -173,7 +163,6 @@ export function ExploreFilter({ destinations }: ExploreFilterProps) {
         )}
       </div>
 
-      {/* 여행지 그리드 */}
       {filteredDestinations.length === 0 ? (
         <div className="py-20 text-center">
           <p className="text-lg text-muted-foreground">검색 결과가 없습니다</p>
@@ -193,12 +182,9 @@ export function ExploreFilter({ destinations }: ExploreFilterProps) {
                   className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-4 left-4 flex items-center gap-2">
-                  <span className="text-4xl">{destination.emoji}</span>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">{destination.city}</h3>
-                    <p className="text-sm text-white/90">{destination.country}</p>
-                  </div>
+                <div className="absolute bottom-4 left-4">
+                  <h3 className="text-xl font-bold text-white">{destination.city}</h3>
+                  <p className="text-sm text-white/90">{destination.country}</p>
                 </div>
               </div>
               <CardContent className="p-6">

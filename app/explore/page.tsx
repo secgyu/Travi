@@ -21,7 +21,6 @@ export default function ExplorePage() {
       slug: koreanToSlug[city.name] || city.name.toLowerCase(),
       country: city.country,
       region: city.region,
-      emoji: city.emoji,
       description: city.description.split(".")[0], // 첫 문장만
       image: city.heroImage,
       tags,

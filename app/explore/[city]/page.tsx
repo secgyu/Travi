@@ -30,13 +30,7 @@ export default async function CityDetailPage({ params }: { params: Promise<{ cit
     <div className="min-h-screen bg-background">
       <Header />
 
-      <CityHero
-        name={city.name}
-        country={city.country}
-        emoji={city.emoji}
-        description={city.description}
-        heroImage={city.heroImage}
-      />
+      <CityHero name={city.name} country={city.country} description={city.description} heroImage={city.heroImage} />
 
       <main className="mx-auto max-w-7xl px-4 py-12">
         <div className="mb-12 flex flex-wrap gap-3">

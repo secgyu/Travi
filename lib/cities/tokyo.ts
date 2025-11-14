@@ -7,7 +7,7 @@ export const tokyo: CityData = {
   emoji: "🗼",
   description:
     "현대와 전통이 공존하는 매력적인 도시. 최첨단 기술과 고즈넉한 신사, 미슐랭 맛집과 라멘 골목이 어우러진 곳입니다.",
-  heroImage: "/tokyo-cityscape.jpg",
+  heroImage: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80",
   images: [
     "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=500&q=80",
     "https://images.unsplash.com/photo-1513407030348-c983a97b98d8?w=500&q=80",
