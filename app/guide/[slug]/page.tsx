@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -91,11 +92,13 @@ export default async function GuideDetailPage({ params }: { params: Promise<{ sl
           </div>
         </div>
 
-        <div className="mb-8 overflow-hidden rounded-2xl">
-          <img
+        <div className="relative mb-8 h-[400px] w-full overflow-hidden rounded-2xl">
+          <Image
             src={metadata.image || "/placeholder.svg"}
             alt={metadata.title}
-            className="w-full h-[400px] object-cover"
+            fill
+            className="object-cover"
+            priority
           />
         </div>
 
@@ -110,10 +113,11 @@ export default async function GuideDetailPage({ params }: { params: Promise<{ sl
               <Link key={related.id} href={`/guide/${related.id}`}>
                 <Card className="group overflow-hidden border-0 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                   <div className="relative h-40 overflow-hidden">
-                    <img
+                    <Image
                       src={related.image || "/placeholder.svg"}
                       alt={related.title}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   </div>
