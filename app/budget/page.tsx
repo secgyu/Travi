@@ -5,7 +5,6 @@ import type React from "react";
 import { useState } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,7 +80,6 @@ export default function BudgetPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/20 via-background to-background">
       <Header />
-      <PageHeader title="예산 계산기" />
 
       <main className="mx-auto max-w-5xl px-4 py-12">
         {/* Budget Overview */}
