@@ -12,11 +12,8 @@ export default function ExplorePage() {
   const allCities = getAllCities();
 
   const destinations = allCities.map((city) => {
-    // 예산에서 숫자 추출 (첫 번째 값)
     const budgetMatch = city.avgBudget.match(/₩([\d,]+)/);
     const avgBudget = budgetMatch ? budgetMatch[0] : city.avgBudget;
-
-    // 간단한 태그 생성 (highlights에서)
     const tags = city.highlights.slice(0, 3);
 
     return {
@@ -71,9 +68,7 @@ export default function ExplorePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/20 via-background to-background">
       <Header />
-
       <main className="mx-auto max-w-7xl px-4 py-12">
-        {/* Hero Section */}
         <div className="mb-16 text-center">
           <div className="mb-4 flex items-center justify-center gap-2">
             <Plane className="h-8 w-8 text-primary" />
@@ -81,17 +76,12 @@ export default function ExplorePage() {
           </div>
           <p className="text-lg text-foreground/80">인기 여행지를 둘러보고 AI와 함께 나만의 여행을 계획하세요</p>
         </div>
-
-        {/* Destinations with Filter */}
         <div className="mb-20">
           <ExploreFilter destinations={destinations} />
         </div>
-
-        {/* Theme Section */}
         <div className="mb-8 flex items-center gap-2">
           <h2 className="text-2xl font-bold text-foreground">테마별 여행</h2>
         </div>
-
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {themes.map((theme, index) => (
             <Card
@@ -123,8 +113,6 @@ export default function ExplorePage() {
             </Card>
           ))}
         </div>
-
-        {/* CTA Section */}
         <div className="mt-20 rounded-2xl bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 p-12 text-center">
           <h2 className="mb-4 text-3xl font-bold text-foreground">아직 여행지를 정하지 못하셨나요?</h2>
           <p className="mb-6 text-lg text-foreground/80">AI와 대화하며 당신에게 딱 맞는 여행지를 찾아보세요</p>

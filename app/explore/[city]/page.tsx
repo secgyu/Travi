@@ -5,7 +5,7 @@ import { Footer } from "@/components/footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import { getCityBySlug } from "@/lib/cities";
+import { getCityBySlug, slugToKorean } from "@/lib/cities";
 import { CityHero } from "@/components/city/city-hero";
 import { CityQuickInfo } from "@/components/city/city-quick-info";
 import { CityMustVisit } from "@/components/city/city-must-visit";
@@ -14,12 +14,17 @@ import { CityTransportation } from "@/components/city/city-transportation";
 import { CityTips } from "@/components/city/city-tips";
 import { CityBasicInfo } from "@/components/city/city-basic-info";
 
-export default function CityDetailPage({ params }: { params: { city: string } }) {
-  const city = getCityBySlug(params.city);
+export async function generateStaticParams() {
+  return Object.keys(slugToKorean).map((slug) => ({
+    city: slug,
+  }));
+}
 
-  if (!city) {
-    notFound();
-  }
+export default async function CityDetailPage({ params }: { params: Promise<{ city: string }> }) {
+  const { city: citySlug } = await params;
+  const city = getCityBySlug(citySlug);
+
+  if (!city) notFound();
 
   return (
     <div className="min-h-screen bg-background">

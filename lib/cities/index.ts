@@ -1,12 +1,17 @@
-import { CityData, CitySlug } from "./types";
+import { CityData } from "./types";
 import { tokyo } from "./tokyo";
 import { osaka } from "./osaka";
 import { bangkok } from "./bangkok";
 import { paris } from "./paris";
 import { newyork } from "./newyork";
 import { singapore } from "./singapore";
+import { danang } from "./danang";
+import { hongkong } from "./hongkong";
+import { taipei } from "./taipei";
+import { dubai } from "./dubai";
+import { rome } from "./rome";
+import { barcelona } from "./barcelona";
 
-// 도시 데이터 맵
 export const cityDataMap: Record<string, CityData> = {
   도쿄: tokyo,
   오사카: osaka,
@@ -14,9 +19,14 @@ export const cityDataMap: Record<string, CityData> = {
   파리: paris,
   뉴욕: newyork,
   싱가포르: singapore,
+  다낭: danang,
+  홍콩: hongkong,
+  타이베이: taipei,
+  두바이: dubai,
+  로마: rome,
+  바르셀로나: barcelona,
 };
 
-// 슬러그 -> 한국어 이름 매핑
 export const slugToKorean: Record<string, string> = {
   tokyo: "도쿄",
   osaka: "오사카",
@@ -24,9 +34,14 @@ export const slugToKorean: Record<string, string> = {
   paris: "파리",
   newyork: "뉴욕",
   singapore: "싱가포르",
+  danang: "다낭",
+  hongkong: "홍콩",
+  taipei: "타이베이",
+  dubai: "두바이",
+  rome: "로마",
+  barcelona: "바르셀로나",
 };
 
-// 한국어 이름 -> 슬러그 매핑
 export const koreanToSlug: Record<string, string> = {
   도쿄: "tokyo",
   오사카: "osaka",
@@ -34,24 +49,26 @@ export const koreanToSlug: Record<string, string> = {
   파리: "paris",
   뉴욕: "newyork",
   싱가포르: "singapore",
+  다낭: "danang",
+  홍콩: "hongkong",
+  타이베이: "taipei",
+  두바이: "dubai",
+  로마: "rome",
+  바르셀로나: "barcelona",
 };
 
-// 모든 도시 가져오기
 export function getAllCities(): CityData[] {
   return Object.values(cityDataMap);
 }
 
-// 슬러그로 도시 가져오기
 export function getCityBySlug(slug: string): CityData | undefined {
   const koreanName = slugToKorean[slug];
   return koreanName ? cityDataMap[koreanName] : undefined;
 }
 
-// 한국어 이름으로 도시 가져오기
 export function getCityByKoreanName(name: string): CityData | undefined {
   return cityDataMap[name];
 }
 
-// Export types
 export * from "./types";
 
