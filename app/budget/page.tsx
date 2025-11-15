@@ -1,8 +1,6 @@
 "use client";
 
-import type React from "react";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +22,8 @@ interface BudgetItem {
 export default function BudgetPage() {
   const [totalBudget, setTotalBudget] = useState(500000);
   const [currency, setCurrency] = useState("KRW");
-  const [exchangeRate] = useState(0.00075); // KRW to USD
+  const [exchangeRate, setExchangeRate] = useState(0.00075);
+  const [isLoadingRate, setIsLoadingRate] = useState(true);
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([
     { id: "1", category: "항공권", amount: 200000, icon: <Plane className="h-4 w-4" />, color: "bg-blue-500" },
     { id: "2", category: "숙박", amount: 150000, icon: <Hotel className="h-4 w-4" />, color: "bg-purple-500" },
@@ -34,6 +33,26 @@ export default function BudgetPage() {
   ]);
   const [newCategory, setNewCategory] = useState("");
   const [newAmount, setNewAmount] = useState("");
+
+  useEffect(() => {
+    async function fetchExchangeRate() {
+      try {
+        setIsLoadingRate(true);
+        const response = await fetch("/api/exchange-rate");
+        const data = await response.json();
+
+        if (data.success && data.rates) {
+          setExchangeRate(data.rates.USD);
+        }
+      } catch (error) {
+        console.error("환율 정보를 가져오는데 실패했습니다:", error);
+      } finally {
+        setIsLoadingRate(false);
+      }
+    }
+
+    fetchExchangeRate();
+  }, []);
 
   const usedBudget = budgetItems.reduce((sum, item) => sum + item.amount, 0);
   const remainingBudget = totalBudget - usedBudget;
@@ -102,7 +121,11 @@ export default function BudgetPage() {
                 onChange={(e) => setTotalBudget(Number.parseInt(e.target.value) || 0)}
                 className="text-2xl font-bold"
               />
-              <p className="text-sm text-muted-foreground">환율: {convertCurrency(totalBudget)}</p>
+              <p className="text-sm text-muted-foreground">
+                환율: {convertCurrency(totalBudget)}
+                {isLoadingRate && " (환율 정보 로딩 중...)"}
+                {!isLoadingRate && ` (1 USD = ₩${Math.round(1 / exchangeRate).toLocaleString()})`}
+              </p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
