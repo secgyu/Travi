@@ -38,7 +38,7 @@ const CURRENCY_INFO = {
 };
 
 export default function BudgetPage() {
-  const [totalBudget, setTotalBudget] = useState(500000);
+  const [totalBudget, setTotalBudget] = useState(0);
   const [currency, setCurrency] = useState<Currency>("KRW");
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({
     USD: 0.00069,
@@ -47,13 +47,7 @@ export default function BudgetPage() {
     CNY: 0.0053,
   });
   const [isLoadingRate, setIsLoadingRate] = useState(true);
-  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([
-    { id: "1", category: "항공권", amount: 200000, icon: <Plane className="h-4 w-4" />, color: "bg-blue-500" },
-    { id: "2", category: "숙박", amount: 150000, icon: <Hotel className="h-4 w-4" />, color: "bg-purple-500" },
-    { id: "3", category: "식비", amount: 80000, icon: <Utensils className="h-4 w-4" />, color: "bg-orange-500" },
-    { id: "4", category: "교통", amount: 40000, icon: <Car className="h-4 w-4" />, color: "bg-green-500" },
-    { id: "5", category: "쇼핑", amount: 30000, icon: <ShoppingBag className="h-4 w-4" />, color: "bg-pink-500" },
-  ]);
+  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
   const [newCategory, setNewCategory] = useState("");
   const [newAmount, setNewAmount] = useState("");
 
