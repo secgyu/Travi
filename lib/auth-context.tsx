@@ -1,11 +1,11 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
-import type { User, Session } from "@supabase/supabase-js";
+import { createContext, useContext } from "react";
+import { SessionProvider, useSession, signOut as nextAuthSignOut } from "next-auth/react";
+import type { Session } from "next-auth";
 
 type AuthContextType = {
-  user: User | null;
+  user: Session["user"] | null;
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
@@ -18,39 +18,34 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
-
-  useEffect(() => {
-    // 초기 세션 가져오기
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    // 인증 상태 변경 감지
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+function AuthContextProvider({ children }: { children: React.ReactNode }) {
+  const { data: session, status } = useSession();
+  const loading = status === "loading";
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
+    await nextAuthSignOut({ redirect: true, callbackUrl: "/" });
   };
 
-  return <AuthContext.Provider value={{ user, session, loading, signOut }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user: session?.user ?? null,
+        session,
+        loading,
+        signOut,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionProvider>
+      <AuthContextProvider>{children}</AuthContextProvider>
+    </SessionProvider>
+  );
 }
 
 export const useAuth = () => {

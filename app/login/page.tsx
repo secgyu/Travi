@@ -1,10 +1,9 @@
 "use client";
 
-import type React from "react";
-
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -14,11 +13,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Mail, Lock, LogIn } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -31,15 +28,15 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const result = await signIn("credentials", {
         email: formData.email,
         password: formData.password,
+        redirect: false,
       });
 
-      if (error) {
+      if (result?.error) {
         toast.error("로그인 실패", {
-          description:
-            error.message === "Invalid login credentials" ? "이메일 또는 비밀번호가 올바르지 않습니다" : error.message,
+          description: "이메일 또는 비밀번호가 올바르지 않습니다",
         });
         return;
       }
@@ -48,39 +45,23 @@ export default function LoginPage() {
         description: "트래비에 오신 것을 환영합니다!",
       });
 
-      // 로그인 성공 후 마이페이지로 이동
-      router.push("/my");
+      router.push("/");
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error("오류 발생", {
-        description: "로그인 중 오류가 발생했습니다. 다시 시도해주세요.",
+        description: "로그인 중 오류가 발생했습니다.",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSocialLogin = async (provider: "google" | "kakao") => {
+  const handleOAuthLogin = async (provider: "google" | "naver" | "kakao") => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
-        },
-      });
-
-      if (error) {
-        toast.error(`${provider} 로그인 실패`, {
-          description: error.message,
-        });
-      }
+      await signIn(provider, { callbackUrl: "/" });
     } catch {
-      toast.error("오류 발생", {
-        description: "소셜 로그인 중 오류가 발생했습니다.",
+      toast.error("로그인 실패", {
+        description: "다시 시도해주세요",
       });
     }
   };
@@ -97,27 +78,13 @@ export default function LoginPage() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {/* 소셜 로그인 */}
             <div className="space-y-3">
-              {/* <Button
-                type="button"
-                variant="outline"
-                className="w-full h-11 bg-transparent"
-                onClick={() => handleSocialLogin("kakao")}
-              >
-                <div className="flex items-center justify-center gap-3">
-                  <div className="flex h-5 w-5 items-center justify-center rounded bg-[#FEE500]">
-                    <span className="text-xs font-bold text-[#000000]">K</span>
-                  </div>
-                  <span>카카오로 시작하기</span>
-                </div>
-              </Button> */}
-
               <Button
                 type="button"
                 variant="outline"
                 className="w-full h-11 bg-transparent"
-                onClick={() => handleSocialLogin("google")}
+                onClick={() => handleOAuthLogin("google")}
+                disabled={isLoading}
               >
                 <div className="flex items-center justify-center gap-3">
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -141,11 +108,28 @@ export default function LoginPage() {
                   <span>구글로 시작하기</span>
                 </div>
               </Button>
+
               <Button
                 type="button"
                 variant="outline"
                 className="w-full h-11 bg-transparent"
-                onClick={() => handleSocialLogin("kakao")}
+                onClick={() => handleOAuthLogin("naver")}
+                disabled={isLoading}
+              >
+                <div className="flex items-center justify-center gap-3">
+                  <div className="flex h-5 w-5 items-center justify-center rounded bg-[#03C75A]">
+                    <span className="text-xs font-bold text-white">N</span>
+                  </div>
+                  <span>네이버로 시작하기</span>
+                </div>
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-11 bg-transparent"
+                onClick={() => handleOAuthLogin("kakao")}
+                disabled={isLoading}
               >
                 <div className="flex items-center justify-center gap-3">
                   <div className="flex h-5 w-5 items-center justify-center rounded bg-[#FEE500]">
@@ -156,7 +140,6 @@ export default function LoginPage() {
               </Button>
             </div>
 
-            {/* 구분선 */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
@@ -166,7 +149,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* 이메일 로그인 폼 */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">이메일</Label>

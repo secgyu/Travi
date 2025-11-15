@@ -1,10 +1,9 @@
 "use client";
 
-import type React from "react";
-
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -14,106 +13,78 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Mail, Lock, User, UserPlus } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
 
 export default function SignupPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    passwordConfirm: "",
+    confirmPassword: "",
     agreeTerms: false,
-    agreePrivacy: false,
-    agreeMarketing: false,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (formData.password.length < 8) {
-      newErrors.password = "비밀번호는 8자 이상이어야 합니다";
-    }
-
-    if (formData.password !== formData.passwordConfirm) {
-      newErrors.passwordConfirm = "비밀번호가 일치하지 않습니다";
-    }
-
-    if (!formData.agreeTerms) {
-      newErrors.agreeTerms = "이용약관에 동의해주세요";
-    }
-
-    if (!formData.agreePrivacy) {
-      newErrors.agreePrivacy = "개인정보처리방침에 동의해주세요";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-            agreeMarketing: formData.agreeMarketing,
-          },
-        },
-      });
-
-      if (error) {
-        toast.error("회원가입 실패", {
-          description: error.message === "User already registered" ? "이미 가입된 이메일입니다" : error.message,
+      if (formData.password !== formData.confirmPassword) {
+        toast.error("비밀번호 불일치", {
+          description: "비밀번호가 일치하지 않습니다",
         });
         return;
       }
 
-      toast.success("회원가입 성공!", {
-        description: "이메일을 확인하여 계정을 인증해주세요.",
+      if (!formData.agreeTerms) {
+        toast.error("약관 동의 필요", {
+          description: "이용약관에 동의해주세요",
+        });
+        return;
+      }
+
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
       });
 
-      // 회원가입 성공 후 로그인 페이지로 이동
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error("회원가입 실패", {
+          description: data.error || "회원가입에 실패했습니다",
+        });
+        return;
+      }
+
+      toast.success("회원가입 성공", {
+        description: "로그인 페이지로 이동합니다",
+      });
+
       router.push("/login");
-    } catch (error) {
+    } catch {
       toast.error("오류 발생", {
-        description: "회원가입 중 오류가 발생했습니다. 다시 시도해주세요.",
+        description: "회원가입 중 오류가 발생했습니다.",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSocialSignup = async (provider: "google" | "kakao") => {
+  const handleOAuthSignup = async (provider: "google" | "naver" | "kakao") => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) {
-        toast.error(`${provider} 회원가입 실패`, {
-          description: error.message,
-        });
-      }
+      await signIn(provider, { callbackUrl: "/" });
     } catch {
-      toast.error("오류 발생", {
-        description: "소셜 회원가입 중 오류가 발생했습니다.",
+      toast.error("회원가입 실패", {
+        description: "다시 시도해주세요",
       });
     }
   };
@@ -130,27 +101,13 @@ export default function SignupPage() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {/* 소셜 회원가입 */}
             <div className="space-y-3">
-              {/* <Button
-                type="button"
-                variant="outline"
-                className="w-full h-11 bg-transparent"
-                onClick={() => handleSocialSignup("kakao")}
-              >
-                <div className="flex items-center justify-center gap-3">
-                  <div className="flex h-5 w-5 items-center justify-center rounded bg-[#FEE500]">
-                    <span className="text-xs font-bold text-[#000000]">K</span>
-                  </div>
-                  <span>카카오로 시작하기</span>
-                </div>
-              </Button> */}
-
               <Button
                 type="button"
                 variant="outline"
                 className="w-full h-11 bg-transparent"
-                onClick={() => handleSocialSignup("google")}
+                onClick={() => handleOAuthSignup("google")}
+                disabled={isLoading}
               >
                 <div className="flex items-center justify-center gap-3">
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -174,11 +131,28 @@ export default function SignupPage() {
                   <span>구글로 시작하기</span>
                 </div>
               </Button>
+
               <Button
                 type="button"
                 variant="outline"
                 className="w-full h-11 bg-transparent"
-                onClick={() => handleSocialSignup("kakao")}
+                onClick={() => handleOAuthSignup("naver")}
+                disabled={isLoading}
+              >
+                <div className="flex items-center justify-center gap-3">
+                  <div className="flex h-5 w-5 items-center justify-center rounded bg-[#03C75A]">
+                    <span className="text-xs font-bold text-white">N</span>
+                  </div>
+                  <span>네이버로 시작하기</span>
+                </div>
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-11 bg-transparent"
+                onClick={() => handleOAuthSignup("kakao")}
+                disabled={isLoading}
               >
                 <div className="flex items-center justify-center gap-3">
                   <div className="flex h-5 w-5 items-center justify-center rounded bg-[#FEE500]">
@@ -189,7 +163,6 @@ export default function SignupPage() {
               </Button>
             </div>
 
-            {/* 구분선 */}
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
@@ -199,7 +172,6 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* 이메일 회원가입 폼 */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">이름</Label>
@@ -240,84 +212,55 @@ export default function SignupPage() {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="8자 이상 입력해주세요"
+                    placeholder="••••••••"
                     className="pl-10"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
+                    minLength={6}
                   />
                 </div>
-                {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="passwordConfirm">비밀번호 확인</Label>
+                <Label htmlFor="confirmPassword">비밀번호 확인</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    id="passwordConfirm"
+                    id="confirmPassword"
                     type="password"
-                    placeholder="비밀번호를 다시 입력해주세요"
+                    placeholder="••••••••"
                     className="pl-10"
-                    value={formData.passwordConfirm}
-                    onChange={(e) => setFormData({ ...formData, passwordConfirm: e.target.value })}
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     required
+                    minLength={6}
                   />
                 </div>
-                {errors.passwordConfirm && <p className="text-sm text-destructive">{errors.passwordConfirm}</p>}
               </div>
 
-              {/* 약관 동의 */}
-              <div className="space-y-3 rounded-lg border p-4">
-                <div className="flex items-start gap-2">
-                  <Checkbox
-                    id="agreeTerms"
-                    checked={formData.agreeTerms}
-                    onCheckedChange={(checked) => setFormData({ ...formData, agreeTerms: checked as boolean })}
-                  />
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="agreeTerms" className="text-sm font-normal cursor-pointer">
-                      (필수) 이용약관 동의
-                    </Label>
-                    <Link href="/terms" className="text-xs text-muted-foreground hover:underline">
-                      자세히 보기
-                    </Link>
-                  </div>
-                </div>
-                {errors.agreeTerms && <p className="text-sm text-destructive">{errors.agreeTerms}</p>}
-
-                <div className="flex items-start gap-2">
-                  <Checkbox
-                    id="agreePrivacy"
-                    checked={formData.agreePrivacy}
-                    onCheckedChange={(checked) => setFormData({ ...formData, agreePrivacy: checked as boolean })}
-                  />
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="agreePrivacy" className="text-sm font-normal cursor-pointer">
-                      (필수) 개인정보처리방침 동의
-                    </Label>
-                    <Link href="/privacy" className="text-xs text-muted-foreground hover:underline">
-                      자세히 보기
-                    </Link>
-                  </div>
-                </div>
-                {errors.agreePrivacy && <p className="text-sm text-destructive">{errors.agreePrivacy}</p>}
-
-                <div className="flex items-start gap-2">
-                  <Checkbox
-                    id="agreeMarketing"
-                    checked={formData.agreeMarketing}
-                    onCheckedChange={(checked) => setFormData({ ...formData, agreeMarketing: checked as boolean })}
-                  />
-                  <Label htmlFor="agreeMarketing" className="text-sm font-normal cursor-pointer">
-                    (선택) 마케팅 정보 수신 동의
-                  </Label>
-                </div>
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="terms"
+                  checked={formData.agreeTerms}
+                  onCheckedChange={(checked) => setFormData({ ...formData, agreeTerms: checked as boolean })}
+                  required
+                />
+                <Label htmlFor="terms" className="text-sm font-normal leading-relaxed cursor-pointer">
+                  <Link href="/terms" className="text-primary hover:underline">
+                    이용약관
+                  </Link>{" "}
+                  및{" "}
+                  <Link href="/privacy" className="text-primary hover:underline">
+                    개인정보처리방침
+                  </Link>
+                  에 동의합니다
+                </Label>
               </div>
 
               <Button type="submit" className="w-full h-11 gap-2" disabled={isLoading}>
                 {isLoading ? (
-                  "가입 중..."
+                  "회원가입 중..."
                 ) : (
                   <>
                     <UserPlus className="h-4 w-4" />
