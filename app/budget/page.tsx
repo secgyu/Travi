@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Plane, Hotel, Utensils, Car, ShoppingBag, DollarSign, TrendingUp } from "lucide-react";
 
 interface BudgetItem {
@@ -19,10 +20,32 @@ interface BudgetItem {
   color: string;
 }
 
+type Currency = "KRW" | "USD" | "EUR" | "JPY" | "CNY";
+
+interface ExchangeRates {
+  USD: number;
+  EUR: number;
+  JPY: number;
+  CNY: number;
+}
+
+const CURRENCY_INFO = {
+  KRW: { symbol: "₩", name: "원", format: (n: number) => `₩${n.toLocaleString()}` },
+  USD: { symbol: "$", name: "달러", format: (n: number) => `$${n.toFixed(2)}` },
+  EUR: { symbol: "€", name: "유로", format: (n: number) => `€${n.toFixed(2)}` },
+  JPY: { symbol: "¥", name: "엔", format: (n: number) => `¥${Math.round(n).toLocaleString()}` },
+  CNY: { symbol: "¥", name: "위안", format: (n: number) => `¥${n.toFixed(2)}` },
+};
+
 export default function BudgetPage() {
   const [totalBudget, setTotalBudget] = useState(500000);
-  const [currency, setCurrency] = useState("KRW");
-  const [exchangeRate, setExchangeRate] = useState(0.00075);
+  const [currency, setCurrency] = useState<Currency>("KRW");
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({
+    USD: 0.00069,
+    EUR: 0.00063,
+    JPY: 0.0067,
+    CNY: 0.0053,
+  });
   const [isLoadingRate, setIsLoadingRate] = useState(true);
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([
     { id: "1", category: "항공권", amount: 200000, icon: <Plane className="h-4 w-4" />, color: "bg-blue-500" },
@@ -42,7 +65,12 @@ export default function BudgetPage() {
         const data = await response.json();
 
         if (data.success && data.rates) {
-          setExchangeRate(data.rates.USD);
+          setExchangeRates({
+            USD: data.rates.USD,
+            EUR: data.rates.EUR,
+            JPY: data.rates.JPY,
+            CNY: data.rates.CNY,
+          });
         }
       } catch (error) {
         console.error("환율 정보를 가져오는데 실패했습니다:", error);
@@ -82,18 +110,30 @@ export default function BudgetPage() {
     setBudgetItems(budgetItems.map((item) => (item.id === id ? { ...item, amount: newAmount } : item)));
   };
 
-  const formatCurrency = (amount: number) => {
-    if (currency === "KRW") {
-      return `₩${amount.toLocaleString()}원`;
-    }
-    return `$${(amount * exchangeRate).toFixed(2)}`;
+  const convertToKRW = (amount: number, fromCurrency: Currency): number => {
+    if (fromCurrency === "KRW") return amount;
+    const rate = exchangeRates[fromCurrency];
+    return amount / rate;
   };
 
-  const convertCurrency = (amount: number) => {
+  const convertFromKRW = (amount: number, toCurrency: Currency): number => {
+    if (toCurrency === "KRW") return amount;
+    const rate = exchangeRates[toCurrency];
+    return amount * rate;
+  };
+
+  const formatCurrency = (krwAmount: number) => {
     if (currency === "KRW") {
-      return `$${(amount * exchangeRate).toFixed(2)}`;
+      return `₩${krwAmount.toLocaleString()}`;
     }
-    return `₩${Math.round(amount / exchangeRate).toLocaleString()}원`;
+    const converted = convertFromKRW(krwAmount, currency);
+    return CURRENCY_INFO[currency].format(converted);
+  };
+
+  const getExchangeRateDisplay = () => {
+    if (currency === "KRW") return null;
+    const rate = 1 / exchangeRates[currency];
+    return `1 ${currency} = ₩${Math.round(rate).toLocaleString()}`;
   };
 
   return (
@@ -106,14 +146,26 @@ export default function BudgetPage() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>전체 예산</span>
-              <Button variant="outline" size="sm" onClick={() => setCurrency(currency === "KRW" ? "USD" : "KRW")}>
-                {currency === "KRW" ? "KRW → USD" : "USD → KRW"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-normal">통화:</Label>
+                <Select value={currency} onValueChange={(value: Currency) => setCurrency(value)}>
+                  <SelectTrigger className="w-[120px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="KRW">🇰🇷 KRW (원)</SelectItem>
+                    <SelectItem value="USD">🇺🇸 USD (달러)</SelectItem>
+                    <SelectItem value="EUR">🇪🇺 EUR (유로)</SelectItem>
+                    <SelectItem value="JPY">🇯🇵 JPY (엔)</SelectItem>
+                    <SelectItem value="CNY">🇨🇳 CNY (위안)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="totalBudget">총 예산 금액</Label>
+              <Label htmlFor="totalBudget">총 예산 금액 (KRW 기준)</Label>
               <Input
                 id="totalBudget"
                 type="number"
@@ -121,24 +173,32 @@ export default function BudgetPage() {
                 onChange={(e) => setTotalBudget(Number.parseInt(e.target.value) || 0)}
                 className="text-2xl font-bold"
               />
-              <p className="text-sm text-muted-foreground">
-                환율: {convertCurrency(totalBudget)}
-                {isLoadingRate && " (환율 정보 로딩 중...)"}
-                {!isLoadingRate && ` (1 USD = ₩${Math.round(1 / exchangeRate).toLocaleString()})`}
-              </p>
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>
+                  {currency !== "KRW" && `표시: ${formatCurrency(totalBudget)}`}
+                  {isLoadingRate && " (환율 정보 로딩 중...)"}
+                </span>
+                {!isLoadingRate && getExchangeRateDisplay() && (
+                  <span className="text-xs">{getExchangeRateDisplay()}</span>
+                )}
+              </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-lg bg-primary/10 p-4">
                 <div className="mb-1 text-sm text-muted-foreground">사용한 예산</div>
                 <div className="text-2xl font-bold text-primary">{formatCurrency(usedBudget)}</div>
-                <div className="text-xs text-muted-foreground">{convertCurrency(usedBudget)}</div>
+                {currency !== "KRW" && (
+                  <div className="text-xs text-muted-foreground">₩{usedBudget.toLocaleString()}</div>
+                )}
               </div>
 
               <div className="rounded-lg bg-secondary/20 p-4">
                 <div className="mb-1 text-sm text-muted-foreground">남은 예산</div>
                 <div className="text-2xl font-bold text-foreground">{formatCurrency(remainingBudget)}</div>
-                <div className="text-xs text-muted-foreground">{convertCurrency(remainingBudget)}</div>
+                {currency !== "KRW" && (
+                  <div className="text-xs text-muted-foreground">₩{remainingBudget.toLocaleString()}</div>
+                )}
               </div>
 
               <div className="rounded-lg bg-accent/20 p-4">
@@ -199,7 +259,7 @@ export default function BudgetPage() {
                           onChange={(e) => handleUpdateAmount(item.id, Number.parseInt(e.target.value) || 0)}
                           className="w-32"
                         />
-                        <div className="text-xs text-muted-foreground">{convertCurrency(item.amount)}</div>
+                        <div className="text-xs text-muted-foreground">{formatCurrency(item.amount)}</div>
                       </div>
                     </TableCell>
                     <TableCell>
