@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "supabase:init": "node scripts/init-supabase.js",
+    "supabase:seed": "node scripts/seed-supabase.js",
+    "supabase:types": "supabase gen types typescript --local > types/supabase.ts",
+    "supabase:reset": "supabase db reset",
+    "supabase:push": "supabase db push"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.64",

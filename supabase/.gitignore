@@ -1,0 +1,10 @@
+# Supabase
+.branches
+.temp
+.env*
+config.toml
+
+# Backup files
+*.sql.backup
+backup/
+
