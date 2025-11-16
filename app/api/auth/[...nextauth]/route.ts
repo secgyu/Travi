@@ -3,8 +3,17 @@ import GoogleProvider from "next-auth/providers/google";
 import NaverProvider from "next-auth/providers/naver";
 import KakaoProvider from "next-auth/providers/kakao";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { createClient } from "@/utils/supabase/client";
+import { createClient as createBrowserClient } from "@/utils/supabase/client";
+import { createClient } from '@supabase/supabase-js';
 import bcrypt from "bcryptjs";
+
+// 서버용 Supabase 클라이언트 생성
+function createServerSupabaseClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  );
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -31,7 +40,7 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const supabase = createClient();
+        const supabase = createBrowserClient();
 
         // Supabase DB에서 사용자 조회
         const { data: user, error } = await supabase
@@ -74,31 +83,66 @@ export const authOptions: NextAuthOptions = {
     error: "/login",
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       // OAuth 로그인 시 Supabase DB에 사용자 저장
       if (account?.provider !== "credentials") {
         try {
-          const supabase = createClient();
+          const supabase = createServerSupabaseClient();
+
+          console.log("🔐 OAuth signIn callback triggered:", {
+            provider: account?.provider,
+            email: user.email,
+            name: user.name,
+            id: user.id,
+          });
 
           // 기존 사용자 확인
-          const { data: existingUser } = await supabase
+          const { data: existingUser, error: selectError } = await supabase
             .from("users")
             .select("*")
             .eq("email", user.email)
             .single();
 
+          console.log("🔍 Existing user check:", {
+            exists: !!existingUser,
+            email: user.email,
+            selectError: selectError?.message,
+          });
+
           if (!existingUser) {
+            console.log("✨ Creating new user...");
+
             // 새 사용자 생성
-            await supabase.from("users").insert({
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              avatar_url: user.image,
-              provider: account.provider,
-            });
+            const { data: newUser, error: insertError } = await supabase
+              .from("users")
+              .insert({
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                avatar_url: user.image,
+                provider: account?.provider || 'oauth',
+              })
+              .select()
+              .single();
+
+            if (insertError) {
+              console.error("❌ Failed to insert user:", {
+                error: insertError,
+                message: insertError.message,
+                details: insertError.details,
+                hint: insertError.hint,
+              });
+            } else {
+              console.log("✅ New user created successfully:", {
+                id: newUser?.id,
+                email: newUser?.email,
+              });
+            }
+          } else {
+            console.log("👤 Existing user found, skipping insert");
           }
         } catch (error) {
-          console.error("Error saving OAuth user to Supabase:", error);
+          console.error("💥 Error in signIn callback:", error);
         }
       }
 
