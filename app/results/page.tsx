@@ -30,7 +30,7 @@ import {
   GripVertical,
 } from "lucide-react";
 
-const itinerary = [
+const tokyoItinerary = [
   {
     day: 1,
     title: "1일차",
@@ -41,7 +41,7 @@ const itinerary = [
         title: "시부야 스크램블 교차로",
         subtitle: "渋谷スクランブル交差点",
         type: "관광",
-        transport: "🚇 야마노테선 → 시부야역 하차 (2번 출구)",
+        transport: "야마노테선 → 시부야역 하차 (2번 출구)",
         duration: "도보 5분",
         price: "무료",
         photo: true,
@@ -53,7 +53,7 @@ const itinerary = [
         type: "쇼핑",
         transport: "도보 15분",
         duration: "2시간",
-        price: "₩₩",
+        price: "변동",
         photo: true,
       },
       {
@@ -71,7 +71,7 @@ const itinerary = [
         title: "메이지 신궁",
         subtitle: "明治神宮",
         type: "관광",
-        transport: "🚇 야마노테선 → 하라주쿠역",
+        transport: "야마노테선 → 하라주쿠역",
         duration: "2시간",
         price: "무료",
         photo: true,
@@ -81,7 +81,7 @@ const itinerary = [
         title: "저녁 - 이자카야",
         subtitle: "신주쿠 오모이데 요코초",
         type: "식사",
-        transport: "🚇 긴자선 → 신주쿠역",
+        transport: "긴자선 → 신주쿠역",
         duration: "2시간",
         price: "₩35,000원",
         category: "일식",
@@ -98,9 +98,9 @@ const itinerary = [
         title: "츠키지 장외시장",
         subtitle: "築地場外市場",
         type: "관광",
-        transport: "🚇 히비야선 → 츠키지역",
+        transport: "히비야선 → 츠키지역",
         duration: "3시간",
-        price: "₩₩",
+        price: "무료",
         photo: true,
       },
       {
@@ -108,7 +108,7 @@ const itinerary = [
         title: "아사쿠사 센소지",
         subtitle: "浅草寺",
         type: "관광",
-        transport: "🚇 긴자선 → 아사쿠사역",
+        transport: "긴자선 → 아사쿠사역",
         duration: "2시간",
         price: "무료",
         photo: true,
@@ -128,7 +128,7 @@ const itinerary = [
         title: "저녁 - 야키니쿠",
         subtitle: "긴자 야키니쿠 (銀座 焼肉)",
         type: "식사",
-        transport: "🚇 긴자선 → 긴자역",
+        transport: "긴자선 → 긴자역",
         duration: "2시간",
         price: "₩45,000원",
         category: "일식",
@@ -145,7 +145,7 @@ const itinerary = [
         title: "우에노 공원",
         subtitle: "上野公園",
         type: "관광",
-        transport: "🚇 야마노테선 → 우에노역",
+        transport: "야마노테선 → 우에노역",
         duration: "2시간",
         price: "무료",
         photo: true,
@@ -157,7 +157,7 @@ const itinerary = [
         type: "쇼핑",
         transport: "도보 5분",
         duration: "2시간",
-        price: "₩₩",
+        price: "변동",
         photo: false,
       },
       {
@@ -165,7 +165,7 @@ const itinerary = [
         title: "점심 - 돈카츠",
         subtitle: "토키 (とんき)",
         type: "식사",
-        transport: "🚇 메구로역",
+        transport: "메구로역",
         duration: "1시간",
         price: "₩18,000원",
         category: "일식",
@@ -175,9 +175,9 @@ const itinerary = [
         title: "긴자 쇼핑",
         subtitle: "銀座",
         type: "쇼핑",
-        transport: "🚇 긴자선 → 긴자역",
+        transport: "긴자선 → 긴자역",
         duration: "3시간",
-        price: "₩₩₩",
+        price: "변동",
         photo: false,
       },
       {
@@ -198,11 +198,11 @@ export default function ResultsPage() {
   const [activeDay, setActiveDay] = useState(1);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingActivity, setEditingActivity] = useState<number | null>(null);
-  const [localItinerary, setLocalItinerary] = useState(itinerary);
+  const [localItinerary, setLocalItinerary] = useState(tokyoItinerary);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const { toast } = useToast();
 
-  const currentDay = localItinerary.find((d) => d.day === activeDay)!;
+  const currentDay = localItinerary.find((d) => d.day === activeDay) || localItinerary[0];
 
   const handleDeleteActivity = (dayNum: number, activityIdx: number) => {
     setLocalItinerary(
@@ -291,14 +291,13 @@ export default function ResultsPage() {
     <>
       <Header />
       <div className="min-h-screen bg-gradient-to-b from-accent/30 via-background to-background">
-        {/* Navigation header */}
         <div className="sticky top-16 z-40 border-b border-border bg-background/80 backdrop-blur-lg">
           <div className="mx-auto max-w-7xl px-4 py-4">
             <div className="flex items-center justify-between">
               <Link href="/">
                 <Button variant="ghost" className="gap-2">
                   <ArrowLeft className="h-4 w-4" />
-                  메인으로
+                  <span className="hidden md:inline">메인으로</span>
                 </Button>
               </Link>
 
@@ -306,24 +305,42 @@ export default function ResultsPage() {
                 {!isEditMode ? (
                   <>
                     <Button
+                      variant="default"
+                      size="sm"
+                      className="gap-2 rounded-xl bg-primary"
+                      onClick={handleSaveToMyTrips}
+                    >
+                      <Save className="h-4 w-4" />
+                      <span className="hidden md:inline">저장하기</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 rounded-xl bg-transparent"
+                      onClick={() => setIsShareModalOpen(true)}
+                    >
+                      <span className="hidden md:inline">공유하기</span>
+                      <span className="md:hidden">공유</span>
+                    </Button>
+                    <Button
                       variant="outline"
                       size="sm"
                       className="gap-2 rounded-xl bg-transparent"
                       onClick={() => setIsEditMode(true)}
                     >
                       <Edit className="h-4 w-4" />
-                      수정하기
+                      <span className="hidden md:inline">수정하기</span>
                     </Button>
                     <Button variant="outline" size="sm" className="gap-2 rounded-xl bg-transparent">
                       <Download className="h-4 w-4" />
-                      PDF 다운로드
+                      <span className="hidden md:inline">PDF 다운로드</span>
                     </Button>
                   </>
                 ) : (
                   <>
                     <Button variant="default" size="sm" className="gap-2 rounded-xl bg-primary" onClick={handleSave}>
                       <Save className="h-4 w-4" />
-                      저장하기
+                      <span className="hidden md:inline">저장하기</span>
                     </Button>
                     <Button
                       variant="outline"
@@ -332,11 +349,11 @@ export default function ResultsPage() {
                       onClick={() => {
                         setIsEditMode(false);
                         setEditingActivity(null);
-                        setLocalItinerary(itinerary);
+                        setLocalItinerary(tokyoItinerary);
                       }}
                     >
                       <X className="h-4 w-4" />
-                      취소
+                      <span className="hidden md:inline">취소</span>
                     </Button>
                   </>
                 )}
@@ -347,14 +364,13 @@ export default function ResultsPage() {
 
         <main className="px-4 py-12">
           <div className="mx-auto max-w-7xl">
-            {/* Trip summary banner */}
-            <div className="glass-effect mb-8 overflow-hidden rounded-3xl border border-white p-8 shadow-xl">
+            <div className="glass-effect mb-8 overflow-hidden rounded-3xl border border-white p-4 shadow-xl md:p-8">
               <div className="flex flex-wrap items-start justify-between gap-6">
-                <div>
+                <div className="w-full lg:w-auto">
                   <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-cta/10 px-4 py-2 text-sm font-semibold text-cta-foreground">
                     AI 추천 여행 일정
                   </div>
-                  <h1 className="mb-3 text-4xl font-bold text-foreground">도쿄 3일 여행 코스 🗼</h1>
+                  <h1 className="mb-3 text-3xl font-bold text-foreground md:text-4xl">도쿄 3일 여행 코스 🗼</h1>
                   <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-5 w-5" />
@@ -368,26 +384,25 @@ export default function ResultsPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3">
-                  <Card className="glass-effect flex items-center gap-3 border-0 px-6 py-3 shadow-md">
+                <div className="flex w-full flex-row gap-3 lg:w-auto lg:flex-col">
+                  <Card className="glass-effect flex flex-1 items-center gap-3 border-0 px-4 py-3 shadow-md lg:flex-none lg:px-6">
                     <Cloud className="h-6 w-6 text-secondary" />
                     <div>
-                      <p className="text-sm text-muted-foreground">날씨</p>
-                      <p className="font-semibold text-foreground">맑음 18°C</p>
+                      <p className="text-xs text-muted-foreground md:text-sm">날씨</p>
+                      <p className="text-sm font-semibold text-foreground md:text-base">맑음 18°C</p>
                     </div>
                   </Card>
 
-                  <Card className="glass-effect flex items-center gap-3 border-0 px-6 py-3 shadow-md">
+                  <Card className="glass-effect flex flex-1 items-center gap-3 border-0 px-4 py-3 shadow-md lg:flex-none lg:px-6">
                     <span className="text-2xl">💰</span>
                     <div>
-                      <p className="text-sm text-muted-foreground">예상 경비</p>
-                      <p className="text-xl font-bold text-primary">₩500,000원</p>
+                      <p className="text-xs text-muted-foreground md:text-sm">예상 경비</p>
+                      <p className="text-lg font-bold text-primary md:text-xl">₩850,000원</p>
                     </div>
                   </Card>
                 </div>
               </div>
 
-              {/* Edit mode banner */}
               {isEditMode && (
                 <div className="mb-6 rounded-xl border-2 border-cta bg-cta/10 p-4">
                   <div className="flex items-center gap-3">
@@ -403,18 +418,15 @@ export default function ResultsPage() {
                 </div>
               )}
 
-              {/* Main content grid */}
               <div className="grid gap-6 lg:grid-cols-5">
-                {/* Left panel - Timeline */}
                 <div className="lg:col-span-2">
-                  {/* Day tabs */}
-                  <div className="mb-6 flex gap-2">
+                  <div className="scrollbar-hide -mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0">
                     {localItinerary.map((day) => (
                       <Button
                         key={day.day}
                         onClick={() => setActiveDay(day.day)}
                         variant={activeDay === day.day ? "default" : "outline"}
-                        className={`flex-1 rounded-xl transition-all ${
+                        className={`flex-none rounded-xl transition-all ${
                           activeDay === day.day
                             ? "bg-primary text-primary-foreground shadow-lg"
                             : "bg-card hover:bg-accent"
@@ -425,7 +437,6 @@ export default function ResultsPage() {
                     ))}
                   </div>
 
-                  {/* Timeline cards */}
                   <div className="space-y-4">
                     <div className="mb-4 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 p-4">
                       <p className="text-center text-lg font-semibold text-foreground">{currentDay.date}</p>
@@ -438,7 +449,7 @@ export default function ResultsPage() {
                           isEditMode ? "border-2 border-dashed border-primary" : ""
                         }`}
                       >
-                        <div className="p-5">
+                        <div className="p-4 md:p-5">
                           {isEditMode && (
                             <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
                               <div className="flex items-center gap-2">
@@ -520,13 +531,13 @@ export default function ResultsPage() {
                                   <Clock className="h-4 w-4 text-primary" />
                                   <span className="font-semibold text-primary">{activity.time}</span>
                                 </div>
-                                <Badge variant="secondary" className="rounded-lg">
+                                <Badge variant="secondary" className="rounded-lg text-xs md:text-sm">
                                   {activity.type}
                                 </Badge>
                               </div>
 
-                              <h3 className="mb-1 text-lg font-bold text-foreground">{activity.title}</h3>
-                              <p className="mb-3 text-sm text-muted-foreground">{activity.subtitle}</p>
+                              <h3 className="mb-1 text-lg font-bold text-foreground md:text-xl">{activity.title}</h3>
+                              <p className="mb-3 text-sm text-muted-foreground md:text-base">{activity.subtitle}</p>
 
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2 text-sm text-foreground">
@@ -576,9 +587,8 @@ export default function ResultsPage() {
                   </div>
                 </div>
 
-                {/* Right panel - Map */}
                 <div className="lg:col-span-3">
-                  <Card className="sticky top-24 h-[600px] overflow-hidden border-0 shadow-xl lg:h-[800px]">
+                  <Card className="sticky top-24 h-[400px] overflow-hidden border-0 shadow-xl lg:h-[800px]">
                     <div className="relative h-full w-full bg-gradient-to-br from-accent/20 to-secondary/20">
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-center">
@@ -592,28 +602,28 @@ export default function ResultsPage() {
                         </div>
                       </div>
 
-                      <div className="absolute bottom-6 left-6 right-6 space-y-3">
+                      <div className="absolute bottom-3 left-3 right-3 space-y-3 md:bottom-6 md:left-6 md:right-6">
                         {currentDay.activities.slice(0, 2).map((activity, idx) => (
                           <div
                             key={idx}
-                            className="glass-effect animate-in fade-in slide-in-from-bottom-4 rounded-xl border border-white p-4 shadow-lg"
+                            className="glass-effect animate-in fade-in slide-in-from-bottom-4 rounded-xl border border-white p-3 shadow-lg md:p-4"
                             style={{ animationDelay: `${idx * 100}ms` }}
                           >
                             <div className="flex items-start gap-3">
-                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
                                 {idx + 1}
                               </div>
-                              <div className="flex-1">
-                                <p className="font-semibold text-foreground">{activity.title}</p>
-                                <p className="text-sm text-muted-foreground">{activity.time}</p>
+                              <div className="flex-1 min-w-0">
+                                <p className="truncate font-semibold text-foreground">{activity.title}</p>
+                                <p className="truncate text-sm text-muted-foreground">{activity.time}</p>
                               </div>
-                              {activity.photo && <Camera className="h-5 w-5 text-cta-foreground" />}
+                              {activity.photo && <Camera className="h-5 w-5 shrink-0 text-cta-foreground" />}
                             </div>
                           </div>
                         ))}
                       </div>
 
-                      <div className="glass-effect absolute right-6 top-6 rounded-xl border border-white px-4 py-2 shadow-lg">
+                      <div className="glass-effect absolute right-3 top-3 rounded-xl border border-white px-4 py-2 shadow-lg md:right-6 md:top-6">
                         <p className="text-sm font-medium text-foreground">총 이동거리: 12.5km</p>
                       </div>
                     </div>
@@ -621,7 +631,6 @@ export default function ResultsPage() {
                 </div>
               </div>
 
-              {/* Trip tips section */}
               <div className="mt-12">
                 <h2 className="mb-6 text-2xl font-bold text-foreground">여행 팁 💡</h2>
                 <div className="grid gap-4 md:grid-cols-3">
@@ -656,7 +665,6 @@ export default function ResultsPage() {
 
         <Footer />
 
-        {/* Share modal */}
         <ShareModal open={isShareModalOpen} onOpenChange={setIsShareModalOpen} />
       </div>
     </>

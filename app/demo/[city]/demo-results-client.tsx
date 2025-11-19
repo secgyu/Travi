@@ -7,7 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
-import { MapPin, Clock, Train, Utensils, Camera, Cloud, Navigation, Calendar, Info, Sparkles } from "lucide-react";
+import {
+  MapPin,
+  Clock,
+  Train,
+  Utensils,
+  Camera,
+  Cloud,
+  Navigation,
+  ArrowLeft,
+  Calendar,
+  Info,
+  Sparkles,
+} from "lucide-react";
 
 type Activity = {
   time: string;
@@ -17,7 +29,7 @@ type Activity = {
   transport: string;
   duration: string;
   price: string;
-  photo?: boolean;
+  photo: boolean;
   category?: string;
 };
 
@@ -38,12 +50,26 @@ type DemoData = {
 
 export function DemoResultsClient({ data, city }: { data: DemoData; city: string }) {
   const [activeDay, setActiveDay] = useState(1);
+
   const currentDay = data.itinerary.find((d) => d.day === activeDay) || data.itinerary[0];
 
   return (
     <>
       <Header />
       <div className="min-h-screen bg-gradient-to-b from-accent/30 via-background to-background">
+        <div className="sticky top-16 z-40 border-b border-border bg-background/80 backdrop-blur-lg">
+          <div className="mx-auto max-w-7xl px-4 py-4">
+            <div className="flex items-center justify-between">
+              <Link href="/">
+                <Button variant="ghost" className="gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="hidden md:inline">메인으로</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 border-b border-primary/20 px-4 py-4">
           <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center gap-4 text-primary">
             <div className="flex items-center gap-3">
@@ -63,13 +89,13 @@ export function DemoResultsClient({ data, city }: { data: DemoData; city: string
 
         <main className="px-4 py-12">
           <div className="mx-auto max-w-7xl">
-            <div className="glass-effect mb-8 overflow-hidden rounded-3xl border border-white p-8 shadow-xl">
+            <div className="glass-effect mb-8 overflow-hidden rounded-3xl border border-white p-4 shadow-xl md:p-8">
               <div className="flex flex-wrap items-start justify-between gap-6">
-                <div>
+                <div className="w-full lg:w-auto">
                   <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-cta/10 px-4 py-2 text-sm font-semibold text-cta-foreground">
                     AI 추천 여행 일정
                   </div>
-                  <h1 className="mb-3 text-4xl font-bold text-foreground">{data.title}</h1>
+                  <h1 className="mb-3 text-3xl font-bold text-foreground md:text-4xl">{data.title}</h1>
                   <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-5 w-5" />
@@ -83,20 +109,20 @@ export function DemoResultsClient({ data, city }: { data: DemoData; city: string
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3">
-                  <Card className="glass-effect flex items-center gap-3 border-0 px-6 py-3 shadow-md">
+                <div className="flex w-full flex-row gap-3 lg:w-auto lg:flex-col">
+                  <Card className="glass-effect flex flex-1 items-center gap-3 border-0 px-4 py-3 shadow-md lg:flex-none lg:px-6">
                     <Cloud className="h-6 w-6 text-secondary" />
                     <div>
-                      <p className="text-sm text-muted-foreground">날씨</p>
-                      <p className="font-semibold text-foreground">맑음 18°C</p>
+                      <p className="text-xs text-muted-foreground md:text-sm">날씨</p>
+                      <p className="font-semibold text-foreground md:text-base">맑음 18°C</p>
                     </div>
                   </Card>
 
-                  <Card className="glass-effect flex items-center gap-3 border-0 px-6 py-3 shadow-md">
+                  <Card className="glass-effect flex flex-1 items-center gap-3 border-0 px-4 py-3 shadow-md lg:flex-none lg:px-6">
                     <span className="text-2xl">💰</span>
                     <div>
-                      <p className="text-sm text-muted-foreground">예상 경비</p>
-                      <p className="text-xl font-bold text-primary">{data.budget}</p>
+                      <p className="text-xs text-muted-foreground md:text-sm">예상 경비</p>
+                      <p className="text-lg font-bold text-primary md:text-xl">{data.budget}</p>
                     </div>
                   </Card>
                 </div>
@@ -104,13 +130,13 @@ export function DemoResultsClient({ data, city }: { data: DemoData; city: string
 
               <div className="grid gap-6 lg:grid-cols-5">
                 <div className="lg:col-span-2">
-                  <div className="mb-6 flex gap-2">
+                  <div className="scrollbar-hide -mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-2 md:mx-0 md:px-0">
                     {data.itinerary.map((day) => (
                       <Button
                         key={day.day}
                         onClick={() => setActiveDay(day.day)}
                         variant={activeDay === day.day ? "default" : "outline"}
-                        className={`flex-1 rounded-xl transition-all ${
+                        className={`flex-none rounded-xl transition-all ${
                           activeDay === day.day
                             ? "bg-primary text-primary-foreground shadow-lg"
                             : "bg-card hover:bg-accent"
@@ -128,24 +154,24 @@ export function DemoResultsClient({ data, city }: { data: DemoData; city: string
 
                     {currentDay.activities.map((activity, idx) => (
                       <Card key={idx} className="overflow-hidden border-0 shadow-md transition-all hover:shadow-xl">
-                        <div className="p-5">
+                        <div className="p-4 md:p-5">
                           <div className="mb-3 flex items-start justify-between">
                             <div className="flex items-center gap-2">
                               <Clock className="h-4 w-4 text-primary" />
                               <span className="font-semibold text-primary">{activity.time}</span>
                             </div>
-                            <Badge variant="secondary" className="rounded-lg">
+                            <Badge variant="secondary" className="rounded-lg text-xs md:text-sm">
                               {activity.type}
                             </Badge>
                           </div>
 
-                          <h3 className="mb-1 text-lg font-bold text-foreground">{activity.title}</h3>
-                          <p className="mb-3 text-sm text-muted-foreground">{activity.subtitle}</p>
+                          <h3 className="mb-1 text-lg font-bold text-foreground md:text-xl">{activity.title}</h3>
+                          <p className="mb-3 text-sm text-muted-foreground md:text-base">{activity.subtitle}</p>
 
                           <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm text-foreground">
-                              <Train className="h-4 w-4 text-secondary" />
-                              <span>{activity.transport}</span>
+                            <div className="flex items-start gap-2 text-sm text-foreground">
+                              <Train className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
+                              <span className="leading-relaxed">{activity.transport}</span>
                             </div>
 
                             <div className="flex items-center gap-4 text-sm">
@@ -177,7 +203,7 @@ export function DemoResultsClient({ data, city }: { data: DemoData; city: string
                 </div>
 
                 <div className="lg:col-span-3">
-                  <Card className="sticky top-24 h-[600px] overflow-hidden border-0 shadow-xl lg:h-[800px]">
+                  <Card className="sticky top-24 h-[400px] overflow-hidden border-0 shadow-xl lg:h-[800px]">
                     <div className="relative h-full w-full bg-gradient-to-br from-accent/20 to-secondary/20">
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-center">
@@ -191,28 +217,28 @@ export function DemoResultsClient({ data, city }: { data: DemoData; city: string
                         </div>
                       </div>
 
-                      <div className="absolute bottom-6 left-6 right-6 space-y-3">
+                      <div className="absolute bottom-3 left-3 right-3 space-y-3 md:bottom-6 md:left-6 md:right-6">
                         {currentDay.activities.slice(0, 2).map((activity, idx) => (
                           <div
                             key={idx}
-                            className="glass-effect animate-in fade-in slide-in-from-bottom-4 rounded-xl border border-white p-4 shadow-lg"
+                            className="glass-effect animate-in fade-in slide-in-from-bottom-4 rounded-xl border border-white p-3 shadow-lg md:p-4"
                             style={{ animationDelay: `${idx * 100}ms` }}
                           >
                             <div className="flex items-start gap-3">
-                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
                                 {idx + 1}
                               </div>
-                              <div className="flex-1">
-                                <p className="font-semibold text-foreground">{activity.title}</p>
-                                <p className="text-sm text-muted-foreground">{activity.time}</p>
+                              <div className="flex-1 min-w-0">
+                                <p className="truncate font-semibold text-foreground">{activity.title}</p>
+                                <p className="truncate text-sm text-muted-foreground">{activity.time}</p>
                               </div>
-                              {activity.photo && <Camera className="h-5 w-5 text-cta-foreground" />}
+                              {activity.photo && <Camera className="h-5 w-5 shrink-0 text-cta-foreground" />}
                             </div>
                           </div>
                         ))}
                       </div>
 
-                      <div className="glass-effect absolute right-6 top-6 rounded-xl border border-white px-4 py-2 shadow-lg">
+                      <div className="glass-effect absolute right-3 top-3 rounded-xl border border-white px-4 py-2 shadow-lg md:right-6 md:top-6">
                         <p className="text-sm font-medium text-foreground">총 이동거리: 12.5km</p>
                       </div>
                     </div>
