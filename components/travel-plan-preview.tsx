@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
+import Link from "next/link";
 
 export function TravelPlanPreview() {
   return (
@@ -14,7 +15,6 @@ export function TravelPlanPreview() {
         </div>
 
         <div className="grid gap-8 md:grid-cols-2 lg:gap-12">
-          {/* Plan 1 */}
           <Card className="overflow-hidden border-0 shadow-lg transition-all hover:shadow-xl">
             <div className="relative h-48 w-full">
               <Image
@@ -70,13 +70,13 @@ export function TravelPlanPreview() {
               </div>
             </CardContent>
             <CardFooter className="bg-muted/30 p-6">
-              <Button className="w-full" variant="outline">
-                상세 일정 보기 <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <Link href="/demo/tokyo" className="w-full">
+                <Button className="w-full" variant="outline">
+                  데모 일정 보기 <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
             </CardFooter>
           </Card>
-
-          {/* Plan 2 */}
           <Card className="overflow-hidden border-0 shadow-lg transition-all hover:shadow-xl">
             <div className="relative h-48 w-full">
               <Image
@@ -132,9 +132,11 @@ export function TravelPlanPreview() {
               </div>
             </CardContent>
             <CardFooter className="bg-muted/30 p-6">
-              <Button className="w-full" variant="outline">
-                상세 일정 보기 <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <Link href="/demo/osaka" className="w-full">
+                <Button className="w-full" variant="outline">
+                  데모 일정 보기 <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
             </CardFooter>
           </Card>
         </div>
