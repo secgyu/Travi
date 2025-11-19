@@ -31,6 +31,7 @@ export default function ExplorePage() {
 
   const themes = [
     {
+      id: "food",
       title: "미식 투어",
       icon: Utensils,
       description: "현지 맛집과 전통 음식을 찾아 떠나는 여행",
@@ -39,28 +40,31 @@ export default function ExplorePage() {
       destinations: ["오사카", "방콕", "타이베이"],
     },
     {
+      id: "culture",
       title: "문화 탐방",
       icon: Landmark,
       description: "역사와 문화유산을 체험하는 여행",
       color: "text-purple-500",
       bgColor: "bg-purple-50",
-      destinations: ["교토", "로마", "아테네"],
+      destinations: ["로마", "파리", "바르셀로나"],
     },
     {
+      id: "shopping",
       title: "쇼핑 천국",
       icon: ShoppingBag,
       description: "쇼핑과 트렌디한 거리를 즐기는 여행",
       color: "text-pink-500",
       bgColor: "bg-pink-50",
-      destinations: ["도쿄", "뉴욕", "밀라노"],
+      destinations: ["도쿄", "뉴욕", "홍콩"],
     },
     {
+      id: "nature",
       title: "자연 힐링",
       icon: Mountain,
       description: "자연 속에서 힐링하는 여유로운 여행",
       color: "text-green-500",
       bgColor: "bg-green-50",
-      destinations: ["제주", "뉴질랜드", "스위스"],
+      destinations: ["다낭"],
     },
   ];
 
@@ -106,7 +110,7 @@ export default function ExplorePage() {
                   </div>
                 </div>
                 <Button asChild variant="outline" size="sm" className="w-full bg-transparent">
-                  <Link href="/chat">자세히 보기</Link>
+                  <Link href={`/explore/theme/${theme.id}`}>자세히 보기</Link>
                 </Button>
               </CardContent>
             </Card>
