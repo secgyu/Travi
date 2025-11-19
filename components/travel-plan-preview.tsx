@@ -17,11 +17,11 @@ export function TravelPlanPreview() {
           {/* Plan 1 */}
           <Card className="overflow-hidden border-0 shadow-lg transition-all hover:shadow-xl">
             <div className="relative h-48 w-full">
-              <Image 
-                src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80" 
-                alt="Tokyo" 
-                fill 
-                className="object-cover" 
+              <Image
+                src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80"
+                alt="Tokyo"
+                fill
+                className="object-cover"
               />
               <div className="absolute right-4 top-4">
                 <Badge className="bg-white/90 text-foreground hover:bg-white">3일 코스</Badge>
@@ -79,11 +79,11 @@ export function TravelPlanPreview() {
           {/* Plan 2 */}
           <Card className="overflow-hidden border-0 shadow-lg transition-all hover:shadow-xl">
             <div className="relative h-48 w-full">
-              <Image 
-                src="https://images.unsplash.com/photo-1590559899731-a382839e5549?w=800&q=80" 
-                alt="Osaka" 
-                fill 
-                className="object-cover" 
+              <Image
+                src="https://images.unsplash.com/photo-1590559899731-a382839e5549?w=800&q=80"
+                alt="Osaka"
+                fill
+                className="object-cover"
               />
               <div className="absolute right-4 top-4">
                 <Badge className="bg-white/90 text-foreground hover:bg-white">2일 코스</Badge>

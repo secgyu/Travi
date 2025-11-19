@@ -1,7 +1,5 @@
 "use client";
 
-import type React from "react";
-
 import { Search, Calendar, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +39,10 @@ export function TravelHero() {
 
   return (
     <section className="relative overflow-hidden px-4 py-12 md:py-20">
+      <div className="absolute right-8 top-8 opacity-10">
+        <Logo variant="icon" size="lg" className="scale-[2]" />
+      </div>
+
       <div className="mx-auto max-w-4xl text-center">
         <div className="mb-8 flex flex-col items-center gap-4">
           <Logo variant="full" size="lg" />
@@ -73,7 +75,6 @@ export function TravelHero() {
                   onKeyPress={handleKeyPress}
                   placeholder="도쿄, 오사카, 방콕, 파리..."
                   className="h-12 border-0 pl-10 text-base bg-transparent focus-visible:ring-0"
-                  disabled
                 />
               </div>
 
@@ -85,7 +86,6 @@ export function TravelHero() {
                   onKeyPress={handleKeyPress}
                   placeholder="출발일 - 도착일"
                   className="h-12 border-0 pl-10 text-base bg-transparent focus-visible:ring-0"
-                  disabled
                 />
               </div>
             </div>
@@ -103,20 +103,20 @@ export function TravelHero() {
 
         {/* Popular destinations */}
         <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
-          <span className="text-sm text-muted-foreground">인기 여행지:</span>
+          <span className="text-sm text-muted-foreground">여행 테마:</span>
           {[
-            { name: "도쿄", emoji: "🗼" },
-            { name: "오사카", emoji: "🏯" },
-            { name: "방콕", emoji: "🛕" },
-            { name: "다낭", emoji: "🏖️" },
-            { name: "파리", emoji: "🗼" },
-          ].map((dest) => (
+            { name: "식도락", emoji: "🍜" },
+            { name: "힐링", emoji: "💆‍♀️" },
+            { name: "쇼핑", emoji: "🛍️" },
+            { name: "인생샷", emoji: "📸" },
+            { name: "가족여행", emoji: "👨‍👩‍👧‍👦" },
+          ].map((theme) => (
             <button
-              key={dest.name}
-              onClick={() => handleQuickDestination(dest.name)}
+              key={theme.name}
+              onClick={() => handleQuickDestination(theme.name)}
               className="rounded-full bg-card px-4 py-2 text-sm font-medium text-card-foreground shadow-sm transition-all hover:bg-primary hover:text-primary-foreground hover:shadow-md"
             >
-              {dest.name} {dest.emoji}
+              {theme.emoji} {theme.name}
             </button>
           ))}
         </div>
