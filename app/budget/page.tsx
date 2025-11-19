@@ -78,7 +78,7 @@ export default function BudgetPage() {
 
   const usedBudget = budgetItems.reduce((sum, item) => sum + item.amount, 0);
   const remainingBudget = totalBudget - usedBudget;
-  const budgetPercentage = (usedBudget / totalBudget) * 100;
+  const budgetPercentage = totalBudget > 0 ? (usedBudget / totalBudget) * 100 : 0;
 
   const handleAddItem = () => {
     if (!newCategory || !newAmount) return;
@@ -262,10 +262,12 @@ export default function BudgetPage() {
                           <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                             <div
                               className={`h-full ${item.color}`}
-                              style={{ width: `${(item.amount / totalBudget) * 100}%` }}
+                              style={{ width: `${totalBudget > 0 ? (item.amount / totalBudget) * 100 : 0}%` }}
                             />
                           </div>
-                          <span className="text-sm font-medium">{((item.amount / totalBudget) * 100).toFixed(1)}%</span>
+                          <span className="text-sm font-medium">
+                            {totalBudget > 0 ? ((item.amount / totalBudget) * 100).toFixed(1) : 0}%
+                          </span>
                         </div>
                       </div>
                     </TableCell>
