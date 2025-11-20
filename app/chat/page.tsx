@@ -1,7 +1,5 @@
 "use client";
 
-import type React from "react";
-
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useState, useRef, useEffect, useMemo } from "react";
@@ -11,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Header } from "@/components/header";
 import { Logo } from "@/components/logo";
+import { GiJapan, GiCastle, GiPagoda } from "react-icons/gi";
+import { MdWavingHand } from "react-icons/md";
+import { FaLandmark } from "react-icons/fa";
 
 export default function ChatPage() {
   const router = useRouter();
@@ -22,7 +23,6 @@ export default function ChatPage() {
     transport: new DefaultChatTransport({ api: "/api/chat" }),
   });
 
-  // 여행 일정이 완성되었는지 계산
   const showResultsButton = useMemo(() => {
     if (messages.length >= 2) {
       const lastMessage = messages[messages.length - 1];
@@ -37,7 +37,6 @@ export default function ChatPage() {
           })
           .join("");
 
-        // 여행 일정이 포함되어 있는지 확인 (간단한 키워드 검색)
         return (
           messageText.includes("일차") ||
           messageText.includes("1일") ||
@@ -89,72 +88,57 @@ export default function ChatPage() {
     <>
       <Header />
       <div className="relative flex h-[calc(100vh-65px)] flex-col bg-gradient-to-b from-accent/30 via-background to-background">
-        {/* Header
-        <div className="border-b bg-card/50 backdrop-blur-sm">
-          <div className="mx-auto flex max-w-4xl items-center gap-4 px-4 py-4">
-            <Button variant="ghost" size="icon" onClick={() => router.push("/")}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="flex items-center gap-2">
-              <Logo variant="icon" size="sm" />
-              <div>
-                <h1 className="font-bold text-foreground">트래비와 대화하기</h1>
-                <p className="text-xs text-muted-foreground">AI가 맞춤 여행을 만들어드려요</p>
-              </div>
-            </div>
-          </div>
-        </div> */}
-
-        {/* Messages */}
         <div className="flex-1 px-4 py-6 pb-28 overflow-y-auto">
           <div className="mx-auto max-w-4xl space-y-6 min-h-0">
-            {/* Welcome message */}
             {messages.length === 0 && (
               <div className="text-center">
                 <div className="mb-6 inline-flex">
                   <Logo variant="icon" size="lg" />
                 </div>
-                <h2 className="mb-3 text-2xl font-bold text-foreground">안녕하세요! 👋</h2>
+                <h2 className="mb-3 text-2xl font-bold text-foreground flex items-center justify-center gap-2">
+                  안녕하세요!
+                  <MdWavingHand className="h-7 w-7 text-primary" />
+                </h2>
                 <p className="mb-8 text-muted-foreground">
                   어디로 여행을 떠나고 싶으신가요?
                   <br />
                   질문에 답해주시면 맞춤 여행 코스를 만들어드릴게요!
                 </p>
-
-                {/* Quick reply buttons */}
                 <div className="space-y-3">
                   <p className="text-sm font-medium text-muted-foreground">빠른 선택</p>
                   <div className="flex flex-wrap justify-center gap-2">
                     <button
                       onClick={() => handleQuickReply("도쿄 3일 여행 계획 짜줘")}
-                      className="rounded-xl border-2 border-primary/20 bg-card px-4 py-3 text-sm font-medium transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground"
+                      className="rounded-xl border-2 border-primary/20 bg-card px-4 py-3 text-sm font-medium transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground flex items-center gap-2"
                     >
-                      도쿄 🗼
+                      <GiJapan className="h-5 w-5" />
+                      도쿄
                     </button>
                     <button
                       onClick={() => handleQuickReply("오사카 2일 여행 계획 짜줘")}
-                      className="rounded-xl border-2 border-primary/20 bg-card px-4 py-3 text-sm font-medium transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground"
+                      className="rounded-xl border-2 border-primary/20 bg-card px-4 py-3 text-sm font-medium transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground flex items-center gap-2"
                     >
-                      오사카 🏯
+                      <GiCastle className="h-5 w-5" />
+                      오사카
                     </button>
                     <button
                       onClick={() => handleQuickReply("방콕 4일 여행 계획 짜줘")}
-                      className="rounded-xl border-2 border-primary/20 bg-card px-4 py-3 text-sm font-medium transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground"
+                      className="rounded-xl border-2 border-primary/20 bg-card px-4 py-3 text-sm font-medium transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground flex items-center gap-2"
                     >
-                      방콕 🛕
+                      <GiPagoda className="h-5 w-5" />
+                      방콕
                     </button>
                     <button
                       onClick={() => handleQuickReply("파리 5일 여행 계획 짜줘")}
-                      className="rounded-xl border-2 border-primary/20 bg-card px-4 py-3 text-sm font-medium transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground"
+                      className="rounded-xl border-2 border-primary/20 bg-card px-4 py-3 text-sm font-medium transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground flex items-center gap-2"
                     >
-                      파리 🗼
+                      <FaLandmark className="h-5 w-5" />
+                      파리
                     </button>
                   </div>
                 </div>
               </div>
             )}
-
-            {/* Chat messages */}
             {messages.map((message) => (
               <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
@@ -177,8 +161,6 @@ export default function ChatPage() {
                 </div>
               </div>
             ))}
-
-            {/* Results button */}
             {showResultsButton && (
               <div className="flex justify-center animate-in fade-in slide-in-from-bottom-4">
                 <div className="w-full max-w-md space-y-4">
@@ -202,12 +184,9 @@ export default function ChatPage() {
                 </div>
               </div>
             )}
-
             <div ref={messagesEndRef} />
           </div>
         </div>
-
-        {/* Input form */}
         <div className="fixed bottom-0 left-0 right-0 border-t bg-card/95 backdrop-blur-sm">
           <div className="mx-auto max-w-4xl px-4 py-4">
             <form onSubmit={handleSubmit} className="flex gap-2">

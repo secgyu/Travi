@@ -7,19 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
-import {
-  MapPin,
-  Clock,
-  Train,
-  Utensils,
-  Camera,
-  Cloud,
-  Navigation,
-  ArrowLeft,
-  Calendar,
-  Info,
-  Sparkles,
-} from "lucide-react";
+import { MapPin, Clock, Train, Utensils, Camera, Cloud, Navigation, Calendar, Info, Sparkles } from "lucide-react";
 
 type Activity = {
   time: string;
@@ -57,19 +45,6 @@ export function DemoResultsClient({ data, city }: { data: DemoData; city: string
     <>
       <Header />
       <div className="min-h-screen bg-gradient-to-b from-accent/30 via-background to-background">
-        <div className="sticky top-16 z-40 border-b border-border bg-background/80 backdrop-blur-lg">
-          <div className="mx-auto max-w-7xl px-4 py-4">
-            <div className="flex items-center justify-between">
-              <Link href="/">
-                <Button variant="ghost" className="gap-2">
-                  <ArrowLeft className="h-4 w-4" />
-                  <span className="hidden md:inline">메인으로</span>
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-
         <div className="bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 border-b border-primary/20 px-4 py-4">
           <div className="mx-auto max-w-7xl flex flex-col md:flex-row items-center gap-4 text-primary">
             <div className="flex items-center gap-3">

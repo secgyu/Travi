@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { useState } from "react";
+import { IoRestaurant, IoBag, IoCamera } from "react-icons/io5";
+import { MdSpa, MdFamilyRestroom } from "react-icons/md";
 
 export function TravelHero() {
   const router = useRouter();
@@ -39,31 +41,22 @@ export function TravelHero() {
 
   return (
     <section className="relative overflow-hidden px-4 py-12 md:py-20">
-      <div className="absolute right-8 top-8 opacity-10">
-        <Logo variant="icon" size="lg" className="scale-[2]" />
-      </div>
-
       <div className="mx-auto max-w-4xl text-center">
         <div className="mb-8 flex flex-col items-center gap-4">
           <Logo variant="full" size="lg" />
         </div>
-
         <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-secondary/20 px-4 py-2 text-sm font-medium text-secondary-foreground">
           <Sparkles className="h-4 w-4" />
           AI 기반 맞춤 여행 계획
         </div>
-
         <h1 className="mb-6 text-4xl font-bold text-balance text-foreground md:text-5xl">
           어디로 여행을
           <br />
           떠나고 싶으신가요?
         </h1>
-
         <p className="mb-10 text-lg text-muted-foreground md:text-xl">
           AI가 당신만을 위한 완벽한 여행 일정을 만들어드립니다
         </p>
-
-        {/* Search bar */}
         <div className="mx-auto mb-8 max-w-2xl">
           <div className="glass-effect relative rounded-2xl border-2 border-white p-2 shadow-lg transition-all hover:shadow-xl">
             <div className="flex flex-col gap-3 md:flex-row">
@@ -77,7 +70,6 @@ export function TravelHero() {
                   className="h-12 border-0 pl-10 text-base bg-transparent focus-visible:ring-0"
                 />
               </div>
-
               <div className="relative flex-1">
                 <Calendar className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -91,7 +83,6 @@ export function TravelHero() {
             </div>
           </div>
         </div>
-
         <Button
           size="lg"
           onClick={handleSearch}
@@ -100,25 +91,27 @@ export function TravelHero() {
           <Sparkles className="mr-2 h-5 w-5" />
           AI가 추천하는 여행 코스 만들기
         </Button>
-
-        {/* Popular destinations */}
         <div className="mt-12 flex flex-wrap items-center justify-center gap-3">
           <span className="text-sm text-muted-foreground">여행 테마:</span>
           {[
-            { name: "식도락", emoji: "🍜" },
-            { name: "힐링", emoji: "💆‍♀️" },
-            { name: "쇼핑", emoji: "🛍️" },
-            { name: "인생샷", emoji: "📸" },
-            { name: "가족여행", emoji: "👨‍👩‍👧‍👦" },
-          ].map((theme) => (
-            <button
-              key={theme.name}
-              onClick={() => handleQuickDestination(theme.name)}
-              className="rounded-full bg-card px-4 py-2 text-sm font-medium text-card-foreground shadow-sm transition-all hover:bg-primary hover:text-primary-foreground hover:shadow-md"
-            >
-              {theme.emoji} {theme.name}
-            </button>
-          ))}
+            { name: "식도락", icon: IoRestaurant },
+            { name: "힐링", icon: MdSpa },
+            { name: "쇼핑", icon: IoBag },
+            { name: "인생샷", icon: IoCamera },
+            { name: "가족여행", icon: MdFamilyRestroom },
+          ].map((theme) => {
+            const Icon = theme.icon;
+            return (
+              <button
+                key={theme.name}
+                onClick={() => handleQuickDestination(theme.name)}
+                className="rounded-full bg-card px-4 py-2 text-sm font-medium text-card-foreground shadow-sm transition-all hover:bg-primary hover:text-primary-foreground hover:shadow-md flex items-center gap-2"
+              >
+                <Icon className="h-4 w-4" />
+                {theme.name}
+              </button>
+            );
+          })}
         </div>
       </div>
     </section>
