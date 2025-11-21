@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
-import { Search, Calendar, Sparkles, Edit, Share2, HelpCircle } from "lucide-react";
+import { Search, Calendar, Sparkles, Edit, Share2, HelpCircle, Clock, MapPin, DollarSign } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export default function HowToUsePage() {
@@ -60,13 +60,10 @@ export default function HowToUsePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/20 via-background to-background">
       <PageHeader title="AI 여행 플래너 이용방법" />
-
       <main className="mx-auto max-w-5xl px-4 py-12">
         <div className="mb-12 text-center">
           <p className="text-lg text-foreground/80">5단계만 거치면 당신만의 완벽한 여행 계획이 완성됩니다</p>
         </div>
-
-        {/* Steps */}
         <div className="mb-16 space-y-8">
           {steps.map((step, index) => (
             <div key={index} className="flex gap-6 rounded-xl bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
@@ -86,8 +83,6 @@ export default function HowToUsePage() {
             </div>
           ))}
         </div>
-
-        {/* Visual Example */}
         <div className="mb-16 rounded-xl bg-gradient-to-br from-primary/5 to-secondary/5 p-8">
           <h2 className="mb-6 text-center text-2xl font-bold text-foreground">이런 일정을 만들 수 있어요</h2>
           <div className="grid gap-6 md:grid-cols-2">
@@ -96,9 +91,18 @@ export default function HowToUsePage() {
               <h4 className="mb-2 font-bold text-foreground">시부야 (渋谷)</h4>
               <p className="mb-3 text-sm text-foreground/80">도쿄의 젊음과 트렌드가 모이는 곳</p>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <span>⏱️ 2시간</span>
-                <span>🚇 시부야역</span>
-                <span>💰 무료</span>
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  <span>2시간</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  <span>시부야역</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <DollarSign className="h-3 w-3" />
+                  <span>무료</span>
+                </div>
               </div>
             </div>
             <div className="rounded-lg bg-card p-6 shadow-sm">
@@ -106,9 +110,18 @@ export default function HowToUsePage() {
               <h4 className="mb-2 font-bold text-foreground">하라주쿠 (原宿)</h4>
               <p className="mb-3 text-sm text-foreground/80">독특한 패션과 카페가 가득한 거리</p>
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <span>⏱️ 3시간</span>
-                <span>🚇 하라주쿠역</span>
-                <span>💰 ₩30,000</span>
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  <span>3시간</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  <span>하라주쿠역</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <DollarSign className="h-3 w-3" />
+                  <span>₩30,000</span>
+                </div>
               </div>
             </div>
           </div>
@@ -116,8 +129,6 @@ export default function HowToUsePage() {
             * AI가 자동으로 이동 경로와 시간을 최적화합니다
           </p>
         </div>
-
-        {/* FAQ */}
         <div className="rounded-xl bg-card p-8 shadow-sm">
           <div className="mb-6 flex items-center gap-3">
             <HelpCircle className="h-6 w-6 text-primary" />
@@ -133,7 +144,6 @@ export default function HowToUsePage() {
           </Accordion>
         </div>
       </main>
-
       <Footer />
     </div>
   );

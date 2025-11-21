@@ -7,7 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
-import { MapPin, Clock, Train, Utensils, Camera, Cloud, Navigation, Calendar, Info, Sparkles } from "lucide-react";
+import {
+  MapPin,
+  Clock,
+  Train,
+  Utensils,
+  Camera,
+  Cloud,
+  Navigation,
+  Calendar,
+  Info,
+  Sparkles,
+  DollarSign,
+  Lightbulb,
+  Smartphone,
+  Banknote,
+} from "lucide-react";
 
 type Activity = {
   time: string;
@@ -94,7 +109,7 @@ export function DemoResultsClient({ data, city }: { data: DemoData; city: string
                   </Card>
 
                   <Card className="glass-effect flex flex-1 items-center gap-3 border-0 px-4 py-3 shadow-md lg:flex-none lg:px-6">
-                    <span className="text-2xl">💰</span>
+                    <DollarSign className="h-6 w-6 text-primary" />
                     <div>
                       <p className="text-xs text-muted-foreground md:text-sm">예상 경비</p>
                       <p className="text-lg font-bold text-primary md:text-xl">{data.budget}</p>
@@ -222,10 +237,15 @@ export function DemoResultsClient({ data, city }: { data: DemoData; city: string
               </div>
 
               <div className="mt-12">
-                <h2 className="mb-6 text-2xl font-bold text-foreground">여행 팁 💡</h2>
+                <h2 className="mb-6 text-2xl font-bold text-foreground flex items-center gap-2">
+                  <Lightbulb className="h-6 w-6 text-primary" />
+                  여행 팁
+                </h2>
                 <div className="grid gap-4 md:grid-cols-3">
                   <Card className="border-0 p-6 shadow-md">
-                    <div className="mb-3 text-3xl">🚇</div>
+                    <div className="mb-3">
+                      <Train className="h-8 w-8 text-secondary" />
+                    </div>
                     <h3 className="mb-2 font-semibold text-foreground">교통패스</h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
                       {city === "osaka"
@@ -235,7 +255,9 @@ export function DemoResultsClient({ data, city }: { data: DemoData; city: string
                   </Card>
 
                   <Card className="border-0 p-6 shadow-md">
-                    <div className="mb-3 text-3xl">📱</div>
+                    <div className="mb-3">
+                      <Smartphone className="h-8 w-8 text-secondary" />
+                    </div>
                     <h3 className="mb-2 font-semibold text-foreground">유심/포켓와이파이</h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
                       공항에서 포켓와이파이를 대여하거나 현지 유심을 구매하세요.
@@ -243,7 +265,9 @@ export function DemoResultsClient({ data, city }: { data: DemoData; city: string
                   </Card>
 
                   <Card className="border-0 p-6 shadow-md">
-                    <div className="mb-3 text-3xl">💴</div>
+                    <div className="mb-3">
+                      <Banknote className="h-8 w-8 text-secondary" />
+                    </div>
                     <h3 className="mb-2 font-semibold text-foreground">환전</h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
                       현금 위주 사용이 많으니 출국 전 충분한 엔화를 준비하세요.

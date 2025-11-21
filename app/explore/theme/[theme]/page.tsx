@@ -26,7 +26,6 @@ export default async function ThemePage({ params }: { params: Promise<{ theme: s
 
   const allCities = getAllCities();
   const themeCities = allCities.filter((city) => theme.cities.includes(city.name));
-
   const Icon = theme.icon;
 
   const guideTitle: Record<string, string> = {
@@ -47,8 +46,6 @@ export default async function ThemePage({ params }: { params: Promise<{ theme: s
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-accent/5 to-background">
       <Header />
-
-      {/* Hero Section */}
       <section className={`relative bg-gradient-to-br ${theme.gradientFrom} ${theme.gradientTo} py-20 text-white`}>
         <div className="absolute inset-0 bg-black/20" />
         <div className="relative mx-auto max-w-7xl px-4">
@@ -67,9 +64,7 @@ export default async function ThemePage({ params }: { params: Promise<{ theme: s
           </div>
         </div>
       </section>
-
       <main className="mx-auto max-w-7xl px-4 py-12">
-        {/* 기본 정보 */}
         <div className="mb-12 grid gap-6 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
@@ -83,7 +78,6 @@ export default async function ThemePage({ params }: { params: Promise<{ theme: s
               <p className="text-2xl font-bold text-primary">{theme.budgetRange}</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
               <Clock className="h-8 w-8 text-primary" />
@@ -96,7 +90,6 @@ export default async function ThemePage({ params }: { params: Promise<{ theme: s
               <p className="text-2xl font-bold text-primary">{theme.recommendedDuration}</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
               <MapPin className="h-8 w-8 text-primary" />
@@ -110,8 +103,6 @@ export default async function ThemePage({ params }: { params: Promise<{ theme: s
             </CardContent>
           </Card>
         </div>
-
-        {/* 추천 여행지 */}
         <section className="mb-16">
           <h2 className="mb-6 text-3xl font-bold text-foreground">추천 여행지</h2>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -127,9 +118,7 @@ export default async function ThemePage({ params }: { params: Promise<{ theme: s
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                     <div className="absolute bottom-4 left-4">
-                      <h3 className="text-2xl font-bold text-white">
-                        {city.emoji} {city.name}
-                      </h3>
+                      <h3 className="text-2xl font-bold text-white">{city.name}</h3>
                       <p className="text-sm text-white/90">{city.country}</p>
                     </div>
                   </div>
@@ -166,8 +155,6 @@ export default async function ThemePage({ params }: { params: Promise<{ theme: s
             })}
           </div>
         </section>
-
-        {/* 여행 팁 */}
         <section className="mb-16">
           <div className="mb-6 flex items-center gap-3">
             <Lightbulb className="h-8 w-8 text-yellow-500" />
@@ -188,8 +175,6 @@ export default async function ThemePage({ params }: { params: Promise<{ theme: s
             </CardContent>
           </Card>
         </section>
-
-        {/* 관련 가이드 */}
         <section className="mb-16">
           <div className="mb-6 flex items-center gap-3">
             <BookOpen className="h-8 w-8 text-primary" />
@@ -213,8 +198,6 @@ export default async function ThemePage({ params }: { params: Promise<{ theme: s
             ))}
           </div>
         </section>
-
-        {/* CTA */}
         <section className="rounded-2xl bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10 p-12 text-center">
           <h2 className="mb-4 text-3xl font-bold text-foreground">AI와 함께 여행 계획 세우기</h2>
           <p className="mb-6 text-lg text-foreground/80">
@@ -228,7 +211,6 @@ export default async function ThemePage({ params }: { params: Promise<{ theme: s
           </Button>
         </section>
       </main>
-
       <Footer />
     </div>
   );

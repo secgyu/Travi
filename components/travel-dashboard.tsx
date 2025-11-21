@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock, Train, Utensils, Camera, Heart, Share2, Cloud, Navigation } from "lucide-react";
+import { GiJapan } from "react-icons/gi";
 
 const itinerary = [
   {
@@ -150,7 +151,10 @@ export function TravelDashboard() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-foreground">도쿄 3일 여행 코스 🗼</h2>
+            <h2 className="text-3xl font-bold text-foreground flex items-center gap-2">
+              도쿄 3일 여행 코스
+              <GiJapan className="h-8 w-8 text-primary" />
+            </h2>
             <p className="mt-2 text-muted-foreground">2025년 3월 15일 - 3월 17일</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">

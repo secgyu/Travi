@@ -28,7 +28,12 @@ import {
   Trash2,
   Plus,
   GripVertical,
+  DollarSign,
+  Lightbulb,
+  Smartphone,
+  Banknote,
 } from "lucide-react";
+import { GiJapan } from "react-icons/gi";
 
 const tokyoItinerary = [
   {
@@ -370,7 +375,10 @@ export default function ResultsPage() {
                   <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-cta/10 px-4 py-2 text-sm font-semibold text-cta-foreground">
                     AI 추천 여행 일정
                   </div>
-                  <h1 className="mb-3 text-3xl font-bold text-foreground md:text-4xl">도쿄 3일 여행 코스 🗼</h1>
+                  <h1 className="mb-3 text-3xl font-bold text-foreground md:text-4xl flex items-center gap-2">
+                    도쿄 3일 여행 코스
+                    <GiJapan className="h-8 w-8 text-primary" />
+                  </h1>
                   <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-5 w-5" />
@@ -394,7 +402,7 @@ export default function ResultsPage() {
                   </Card>
 
                   <Card className="glass-effect flex flex-1 items-center gap-3 border-0 px-4 py-3 shadow-md lg:flex-none lg:px-6">
-                    <span className="text-2xl">💰</span>
+                    <DollarSign className="h-6 w-6 text-primary" />
                     <div>
                       <p className="text-xs text-muted-foreground md:text-sm">예상 경비</p>
                       <p className="text-lg font-bold text-primary md:text-xl">₩850,000원</p>
@@ -632,10 +640,15 @@ export default function ResultsPage() {
               </div>
 
               <div className="mt-12">
-                <h2 className="mb-6 text-2xl font-bold text-foreground">여행 팁 💡</h2>
+                <h2 className="mb-6 text-2xl font-bold text-foreground flex items-center gap-2">
+                  <Lightbulb className="h-6 w-6 text-primary" />
+                  여행 팁
+                </h2>
                 <div className="grid gap-4 md:grid-cols-3">
                   <Card className="border-0 p-6 shadow-md">
-                    <div className="mb-3 text-3xl">🚇</div>
+                    <div className="mb-3">
+                      <Train className="h-8 w-8 text-secondary" />
+                    </div>
                     <h3 className="mb-2 font-semibold text-foreground">교통패스</h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
                       도쿄 메트로 72시간 패스를 구매하면 1,500엔으로 무제한 이용 가능합니다.
@@ -643,7 +656,9 @@ export default function ResultsPage() {
                   </Card>
 
                   <Card className="border-0 p-6 shadow-md">
-                    <div className="mb-3 text-3xl">📱</div>
+                    <div className="mb-3">
+                      <Smartphone className="h-8 w-8 text-secondary" />
+                    </div>
                     <h3 className="mb-2 font-semibold text-foreground">유심/포켓와이파이</h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
                       공항에서 포켓와이파이를 대여하거나 현지 유심을 구매하세요.
@@ -651,7 +666,9 @@ export default function ResultsPage() {
                   </Card>
 
                   <Card className="border-0 p-6 shadow-md">
-                    <div className="mb-3 text-3xl">💴</div>
+                    <div className="mb-3">
+                      <Banknote className="h-8 w-8 text-secondary" />
+                    </div>
                     <h3 className="mb-2 font-semibold text-foreground">환전</h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
                       현금 위주 사용이 많으니 출국 전 충분한 엔화를 준비하세요.
