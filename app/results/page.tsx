@@ -36,6 +36,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { GiJapan } from "react-icons/gi";
+import KakaoMap from "./KakaoMap";
 
 interface Activity {
   time: string;
@@ -599,7 +600,6 @@ export default function ResultsPage() {
                           </p>
                         </div>
                       </div>
-
                       <div className="absolute bottom-3 left-3 right-3 space-y-3 md:bottom-6 md:left-6 md:right-6">
                         {currentDay.activities.slice(0, 2).map((activity, idx) => (
                           <div
@@ -668,6 +668,7 @@ export default function ResultsPage() {
               </div>
             </div>
           </div>
+          <KakaoMap center={{ lat: 37.123, lng: 127.123 }} level={3} />
         </main>
 
         <Footer />
