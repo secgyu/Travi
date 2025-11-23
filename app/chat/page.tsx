@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 // AI 응답에서 여행 계획 정보 추출
 function extractTravelPlanInfo(messages: any[]) {
   const conversationText = messages
-    .map((m) => 
+    .map((m) =>
       m.parts
         .filter((p: any) => p.type === "text")
         .map((p: any) => p.text)
@@ -26,7 +26,9 @@ function extractTravelPlanInfo(messages: any[]) {
     .join("\n");
 
   // 여행지 추출 (예: "도쿄", "오사카", "파리" 등)
-  const destinationMatch = conversationText.match(/(도쿄|오사카|파리|방콕|뉴욕|런던|바르셀로나|로마|싱가포르|홍콩|타이베이|다낭)[^가-힣]*(여행|가|방문)/);
+  const destinationMatch = conversationText.match(
+    /(도쿄|오사카|파리|방콕|뉴욕|런던|바르셀로나|로마|싱가포르|홍콩|타이베이|다낭)[^가-힣]*(여행|가|방문)/
+  );
   const destination = destinationMatch ? destinationMatch[1] : "여행지";
 
   // 여행 기간 추출 (예: "3일", "2박 3일" 등)
@@ -56,114 +58,165 @@ function extractTravelPlanInfo(messages: any[]) {
   };
 }
 
-// AI 응답에서 일정 파싱
+// AI 응답에서 일정 파싱 (개선된 버전)
 function parseItinerary(messageText: string, duration: number) {
   const itinerary: any[] = [];
-  
-  // 일차별로 분리
-  const dayPattern = /(?:(\d+)일차|Day\s*(\d+))/gi;
-  const dayMatches = [...messageText.matchAll(dayPattern)];
-  
-  if (dayMatches.length === 0) {
-    // 일차 구분이 없으면 기본 구조 생성
-    return Array.from({ length: duration }, (_, i) => ({
-      day: i + 1,
-      title: `${i + 1}일차`,
-      date: `Day ${i + 1}`,
-      activities: [
-        {
-          time: "오전 9:00",
-          title: "여행 시작",
-          subtitle: "",
-          type: "관광",
-          transport: "대중교통",
-          duration: "1시간",
-          price: "무료",
-          photo: true,
-        },
-      ],
-    }));
-  }
 
-  for (let i = 0; i < dayMatches.length; i++) {
-    const dayNum = parseInt(dayMatches[i][1] || dayMatches[i][2]);
-    const startPos = dayMatches[i].index!;
-    const endPos = dayMatches[i + 1]?.index || messageText.length;
-    const dayContent = messageText.substring(startPos, endPos);
+  // 1단계: 일차별로 분리
+  const lines = messageText.split("\n");
+  let currentDay: number | null = null;
+  let currentActivities: any[] = [];
+  let currentActivity: any = null;
 
-    // 시간대별 활동 추출
-    const activities: any[] = [];
-    const timePattern = /🕐*\s*(?:오전|오후|저녁)?\s*(\d{1,2}):?(\d{2})?\s*[-~]?\s*([^🚇\n]+)/g;
-    let activityMatch;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
 
-    while ((activityMatch = timePattern.exec(dayContent)) !== null) {
-      const hour = parseInt(activityMatch[1]);
-      const minute = activityMatch[2] || "00";
-      const title = activityMatch[3].trim();
-
-      // 해당 활동의 상세 정보 추출
-      const activityStartPos = activityMatch.index;
-      const nextActivityMatch = timePattern.exec(dayContent);
-      timePattern.lastIndex = activityStartPos + activityMatch[0].length;
-      
-      const activityEndPos = nextActivityMatch?.index || dayContent.length;
-      const activityContent = dayContent.substring(activityStartPos, activityEndPos);
-
-      // 이동 방법 추출
-      const transportMatch = activityContent.match(/🚇[^\n]*/);
-      const transport = transportMatch ? transportMatch[0].replace(/🚇\s*이동:\s*/, "").trim() : "도보";
-
-      // 소요 시간 추출
-      const durationMatch = activityContent.match(/⏱️[^\n]*/);
-      const duration = durationMatch ? durationMatch[0].replace(/⏱️\s*소요:\s*/, "").trim() : "1시간";
-
-      // 비용 추출
-      const priceMatch = activityContent.match(/💰[^\n]*/);
-      const price = priceMatch ? priceMatch[0].replace(/💰\s*비용:\s*/, "").trim() : "변동";
-
-      // 포토존 여부
-      const isPhotoSpot = activityContent.includes("📸") || activityContent.includes("포토");
-
-      // 활동 타입 결정
-      let type = "관광";
-      if (title.includes("식사") || title.includes("점심") || title.includes("저녁") || title.includes("아침")) {
-        type = "식사";
-      } else if (title.includes("쇼핑") || title.includes("시장")) {
-        type = "쇼핑";
+    // 일차 감지: "**1일차" 또는 "1일차 -" 형식
+    const dayMatch = line.match(/\*?\*?(\d+)일차/);
+    if (dayMatch) {
+      // 이전 일차 데이터 저장
+      if (currentDay !== null && currentActivities.length > 0) {
+        itinerary.push({
+          day: currentDay,
+          title: `${currentDay}일차`,
+          date: `Day ${currentDay}`,
+          activities: currentActivities,
+        });
       }
 
-      activities.push({
-        time: `${hour < 12 ? "오전" : "오후"} ${hour}:${minute}`,
-        title,
-        subtitle: "",
-        type,
-        transport,
-        duration,
-        price,
-        photo: isPhotoSpot,
-      });
+      // 새로운 일차 시작
+      currentDay = parseInt(dayMatch[1]);
+      currentActivities = [];
+      currentActivity = null;
+      continue;
     }
 
-    // 활동이 없으면 기본 활동 추가
-    if (activities.length === 0) {
-      activities.push({
-        time: "오전 9:00",
-        title: `${dayNum}일차 여행`,
-        subtitle: "",
+    // 활동 시간 감지: "오전 9:00 -" 형식
+    const timeMatch = line.match(/(오전|오후|저녁)\s*(\d{1,2}):(\d{2})\s*[-–—]\s*(.+)/);
+    if (timeMatch && currentDay !== null) {
+      // 이전 활동 저장
+      if (currentActivity) {
+        currentActivities.push(currentActivity);
+      }
+
+      const period = timeMatch[1];
+      const hour = timeMatch[2];
+      const minute = timeMatch[3];
+      const titleRaw = timeMatch[4].trim();
+
+      // 제목과 부제목 분리
+      const titleParts = titleRaw.split("(");
+      const title = titleParts[0].trim();
+      const subtitle = titleParts[1] ? titleParts[1].replace(")", "").trim() : "";
+
+      // 새 활동 초기화
+      currentActivity = {
+        time: `${period} ${hour}:${minute}`,
+        title: title,
+        subtitle: subtitle,
         type: "관광",
-        transport: "대중교통",
-        duration: "종일",
-        price: "변동",
+        transport: "도보",
+        duration: "1시간",
+        price: "무료",
         photo: false,
-      });
+      };
+
+      // 타입 자동 감지
+      const titleLower = title.toLowerCase();
+      if (
+        titleLower.includes("식사") ||
+        titleLower.includes("점심") ||
+        titleLower.includes("저녁") ||
+        titleLower.includes("아침") ||
+        titleLower.includes("맛집") ||
+        titleLower.includes("라멘") ||
+        titleLower.includes("스시")
+      ) {
+        currentActivity.type = "식사";
+      } else if (titleLower.includes("쇼핑") || titleLower.includes("시장") || titleLower.includes("market")) {
+        currentActivity.type = "쇼핑";
+      } else if (
+        titleLower.includes("체험") ||
+        titleLower.includes("투어") ||
+        titleLower.includes("클래스") ||
+        titleLower.includes("액티비티")
+      ) {
+        currentActivity.type = "액티비티";
+      }
+
+      continue;
     }
 
-    itinerary.push({
-      day: dayNum,
-      title: `${dayNum}일차`,
-      date: `Day ${dayNum}`,
-      activities,
-    });
+    // 활동이 있을 때만 상세 정보 파싱
+    if (currentActivity) {
+      // 이동 방법
+      if (line.includes("이동:")) {
+        const transportMatch = line.match(/이동:\s*(.+)/);
+        if (transportMatch) {
+          currentActivity.transport = transportMatch[1].trim();
+        }
+      }
+
+      // 소요 시간
+      if (line.includes("소요:")) {
+        const durationMatch = line.match(/소요:\s*(.+)/);
+        if (durationMatch) {
+          currentActivity.duration = durationMatch[1].trim();
+        }
+      }
+
+      // 비용
+      if (line.includes("비용:")) {
+        const priceMatch = line.match(/비용:\s*(.+)/);
+        if (priceMatch) {
+          currentActivity.price = priceMatch[1].trim();
+        }
+      }
+
+      // 포토존
+      if (line.includes("📸")) {
+        currentActivity.photo = true;
+      }
+    }
+  }
+
+  // 마지막 일차 저장
+  if (currentDay !== null) {
+    if (currentActivity) {
+      currentActivities.push(currentActivity);
+    }
+    if (currentActivities.length > 0) {
+      itinerary.push({
+        day: currentDay,
+        title: `${currentDay}일차`,
+        date: `Day ${currentDay}`,
+        activities: currentActivities,
+      });
+    }
+  }
+
+  // 일정이 비어있으면 기본값 생성
+  if (itinerary.length === 0) {
+    console.warn("⚠️ 일정 파싱 실패, 기본 일정 생성");
+    for (let i = 1; i <= duration; i++) {
+      itinerary.push({
+        day: i,
+        title: `${i}일차`,
+        date: `Day ${i}`,
+        activities: [
+          {
+            time: "오전 9:00",
+            title: "여행 시작",
+            subtitle: "",
+            type: "관광",
+            transport: "대중교통",
+            duration: "종일",
+            price: "변동",
+            photo: false,
+          },
+        ],
+      });
+    }
   }
 
   return itinerary;
@@ -253,13 +306,38 @@ export default function ChatPage() {
         .map((part: any) => part.text)
         .join("");
 
+      console.log("=== 원본 AI 응답 ===");
+      console.log(messageText);
+
       const travelInfo = extractTravelPlanInfo(messages);
+      console.log("=== 추출된 여행 정보 ===");
+      console.log(travelInfo);
+
       const itinerary = parseItinerary(messageText, travelInfo.duration);
+      console.log("=== 파싱된 일정 ===");
+      console.log(JSON.stringify(itinerary, null, 2));
 
       // 날짜 계산
       const today = new Date();
       const startDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000); // 7일 후
       const endDate = new Date(startDate.getTime() + (travelInfo.duration - 1) * 24 * 60 * 60 * 1000);
+
+      const travelPlanData = {
+        title: `${travelInfo.destination} ${travelInfo.duration}일 여행`,
+        destination: `${travelInfo.destination}`,
+        start_date: startDate.toISOString().split("T")[0],
+        end_date: endDate.toISOString().split("T")[0],
+        budget: travelInfo.budget,
+        currency: "KRW",
+        travel_style: travelInfo.styles,
+        companions: "AI 추천",
+        itinerary,
+        notes: "AI 채팅으로 생성된 여행 계획",
+        is_public: true,
+      };
+
+      console.log("=== 전송할 데이터 ===");
+      console.log(JSON.stringify(travelPlanData, null, 2));
 
       // 여행 계획 저장
       const response = await fetch("/api/travel-plans", {
@@ -267,26 +345,18 @@ export default function ChatPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          title: `${travelInfo.destination} ${travelInfo.duration}일 여행`,
-          destination: `${travelInfo.destination}`,
-          start_date: startDate.toISOString().split("T")[0],
-          end_date: endDate.toISOString().split("T")[0],
-          budget: travelInfo.budget,
-          currency: "KRW",
-          travel_style: travelInfo.styles,
-          companions: "AI 추천",
-          itinerary,
-          notes: "AI 채팅으로 생성된 여행 계획",
-          is_public: true,
-        }),
+        body: JSON.stringify(travelPlanData),
       });
 
       if (!response.ok) {
-        throw new Error("저장 실패");
+        const errorData = await response.json();
+        console.error("API 오류:", errorData);
+        throw new Error(errorData.error || "저장 실패");
       }
 
       const result = await response.json();
+      console.log("=== 저장 성공 ===");
+      console.log(result);
 
       toast({
         title: "여행 계획이 저장되었습니다!",
@@ -299,7 +369,7 @@ export default function ChatPage() {
       console.error("여행 계획 저장 실패:", error);
       toast({
         title: "저장 실패",
-        description: "여행 계획 저장에 실패했습니다. 다시 시도해주세요.",
+        description: error instanceof Error ? error.message : "여행 계획 저장에 실패했습니다.",
       });
       setIsSaving(false);
     }
