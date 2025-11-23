@@ -230,11 +230,17 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const { messages, sendMessage } = useChat({
+  const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({ api: "/api/chat" }),
   });
 
   const showResultsButton = useMemo(() => {
+    // AI가 응답 중이면 버튼 표시 안 함
+    if (status === "streaming") {
+      return false;
+    }
+
+    // AI 응답이 완료된 후에만 체크
     if (messages.length >= 2) {
       const lastMessage = messages[messages.length - 1];
       if (lastMessage.role === "assistant") {
@@ -258,7 +264,7 @@ export default function ChatPage() {
       }
     }
     return false;
-  }, [messages]);
+  }, [messages, status]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
