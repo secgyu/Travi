@@ -165,3 +165,10 @@ console.log('⚠️  Note: This script provides instructions for manual setup.')
 console.log('    Supabase에서는 보안상의 이유로 직접 SQL 실행이 제한될 수 있습니다.');
 console.log('    위의 Manual Setup Instructions를 따라주세요.\n');
 
+
+
+
+
+
+
+

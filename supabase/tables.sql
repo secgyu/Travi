@@ -152,3 +152,10 @@ CREATE TABLE support_tickets (
 CREATE INDEX idx_support_tickets_user_id ON support_tickets(user_id);
 CREATE INDEX idx_support_tickets_status ON support_tickets(status);
 
+
+
+
+
+
+
+

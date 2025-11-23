@@ -228,3 +228,10 @@ console.log(data, error)
 3. RLS 정책
 4. PostgreSQL 로그 (Supabase Dashboard > Database > Logs)
 
+
+
+
+
+
+
+

@@ -96,12 +96,12 @@ export const authOptions: NextAuthOptions = {
             id: user.id,
           });
 
-          // 기존 사용자 확인
+          // 기존 사용자 확인 (.maybeSingle()로 변경 - 결과가 없어도 에러 발생 안함)
           const { data: existingUser, error: selectError } = await supabase
             .from("users")
             .select("*")
             .eq("email", user.email)
-            .single();
+            .maybeSingle();
 
           console.log("🔍 Existing user check:", {
             exists: !!existingUser,
@@ -112,11 +112,10 @@ export const authOptions: NextAuthOptions = {
           if (!existingUser) {
             console.log("✨ Creating new user...");
 
-            // 새 사용자 생성
+            // 새 사용자 생성 (id 제거 - DB가 자동으로 UUID 생성)
             const { data: newUser, error: insertError } = await supabase
               .from("users")
               .insert({
-                id: user.id,
                 email: user.email,
                 name: user.name,
                 avatar_url: user.image,

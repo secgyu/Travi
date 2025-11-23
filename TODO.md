@@ -270,6 +270,18 @@ RESEND_API_KEY=
 
 - OAuth 로그인회원가입 잘 되는지
 - 로그인후 마이페이지 갔을때 마이페이지 잘뜨는지
+  원인
+
+1. oauth 사용자가 public.users 테이블에 저장안된다.
+   이유는 user.id는 숫자문자열인데 supabase의 users테이블의 id컬럼은 uuid타입이다.
+   그래서 uuid 형식 불일치 -> postgresql 에러난다.
+
+2. nextauth로 로그인은 했지만, supabase auth 세션을 체크하고있다
+   nextauth 세션 != supabase auth 세션
+   nextauth로 로그인해도 supabase.auth.getUser()는 항상 null반환환
+
+- 지도 api연동
+- 날씨 api연동
 
 1. ✅ Supabase 인증 (완료)
 2. ✅ AI 챗봇 API 연동

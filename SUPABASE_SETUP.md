@@ -179,3 +179,10 @@ npx prisma db push
 - [Supabase Discord](https://discord.supabase.com)
 - `supabase/README.md` 참고
 
+
+
+
+
+
+
+
