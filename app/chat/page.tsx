@@ -222,6 +222,58 @@ function parseItinerary(messageText: string, duration: number) {
   return itinerary;
 }
 
+// 모든 assistant 메시지를 누적 파싱 (개선된 버전)
+function parseAllMessages(messages: any[], duration: number) {
+  const allItineraries = new Map<number, any>(); // day -> 일차 데이터
+
+  // 모든 assistant 메시지를 순회
+  for (const message of messages) {
+    if (message.role === "assistant") {
+      const messageText = message.parts
+        .filter((p: any) => p.type === "text")
+        .map((p: any) => p.text)
+        .join("");
+
+      // 이 메시지에서 파싱된 일차들
+      const parsed = parseItinerary(messageText, duration);
+
+      // 각 일차를 Map에 저장 (중복되면 최신 것으로 덮어쓰기)
+      for (const dayData of parsed) {
+        allItineraries.set(dayData.day, dayData);
+      }
+    }
+  }
+
+  // Map을 배열로 변환하고 day 순으로 정렬
+  const result = Array.from(allItineraries.values()).sort((a, b) => a.day - b.day);
+
+  // 일정이 비어있으면 기본값 생성
+  if (result.length === 0) {
+    console.warn("⚠️ 모든 메시지에서 일정 파싱 실패, 기본 일정 생성");
+    for (let i = 1; i <= duration; i++) {
+      result.push({
+        day: i,
+        title: `${i}일차`,
+        date: `Day ${i}`,
+        activities: [
+          {
+            time: "오전 9:00",
+            title: "여행 시작",
+            subtitle: "",
+            type: "관광",
+            transport: "대중교통",
+            duration: "종일",
+            price: "변동",
+            photo: false,
+          },
+        ],
+      });
+    }
+  }
+
+  return result;
+}
+
 export default function ChatPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -305,22 +357,16 @@ export default function ChatPage() {
     try {
       setIsSaving(true);
 
-      // AI 메시지에서 여행 정보 추출
-      const lastMessage = messages[messages.length - 1];
-      const messageText = lastMessage.parts
-        .filter((part: any) => part.type === "text")
-        .map((part: any) => part.text)
-        .join("");
-
-      console.log("=== 원본 AI 응답 ===");
-      console.log(messageText);
+      console.log("=== 전체 메시지 ===");
+      console.log(`총 ${messages.length}개 메시지`);
 
       const travelInfo = extractTravelPlanInfo(messages);
       console.log("=== 추출된 여행 정보 ===");
       console.log(travelInfo);
 
-      const itinerary = parseItinerary(messageText, travelInfo.duration);
-      console.log("=== 파싱된 일정 ===");
+      // 모든 메시지를 누적 파싱 (개선!)
+      const itinerary = parseAllMessages(messages, travelInfo.duration);
+      console.log("=== 누적 파싱된 일정 ===");
       console.log(JSON.stringify(itinerary, null, 2));
 
       // 날짜 계산
