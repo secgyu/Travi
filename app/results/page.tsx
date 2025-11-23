@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,182 +33,140 @@ import {
   Lightbulb,
   Smartphone,
   Banknote,
+  Loader2,
 } from "lucide-react";
 import { GiJapan } from "react-icons/gi";
 
-const tokyoItinerary = [
-  {
-    day: 1,
-    title: "1일차",
-    date: "2025년 3월 15일 (토)",
-    activities: [
-      {
-        time: "오전 9:00",
-        title: "시부야 스크램블 교차로",
-        subtitle: "渋谷スクランブル交差点",
-        type: "관광",
-        transport: "야마노테선 → 시부야역 하차 (2번 출구)",
-        duration: "도보 5분",
-        price: "무료",
-        photo: true,
-      },
-      {
-        time: "오전 11:00",
-        title: "하라주쿠 다케시타 거리",
-        subtitle: "原宿竹下通り",
-        type: "쇼핑",
-        transport: "도보 15분",
-        duration: "2시간",
-        price: "변동",
-        photo: true,
-      },
-      {
-        time: "오후 1:00",
-        title: "점심 - 라멘",
-        subtitle: "이치란 시부야점 (一蘭)",
-        type: "식사",
-        transport: "도보 10분",
-        duration: "1시간",
-        price: "₩15,000원",
-        category: "일식",
-      },
-      {
-        time: "오후 3:00",
-        title: "메이지 신궁",
-        subtitle: "明治神宮",
-        type: "관광",
-        transport: "야마노테선 → 하라주쿠역",
-        duration: "2시간",
-        price: "무료",
-        photo: true,
-      },
-      {
-        time: "오후 6:00",
-        title: "저녁 - 이자카야",
-        subtitle: "신주쿠 오모이데 요코초",
-        type: "식사",
-        transport: "긴자선 → 신주쿠역",
-        duration: "2시간",
-        price: "₩35,000원",
-        category: "일식",
-      },
-    ],
-  },
-  {
-    day: 2,
-    title: "2일차",
-    date: "2025년 3월 16일 (일)",
-    activities: [
-      {
-        time: "오전 8:00",
-        title: "츠키지 장외시장",
-        subtitle: "築地場外市場",
-        type: "관광",
-        transport: "히비야선 → 츠키지역",
-        duration: "3시간",
-        price: "무료",
-        photo: true,
-      },
-      {
-        time: "오후 12:00",
-        title: "아사쿠사 센소지",
-        subtitle: "浅草寺",
-        type: "관광",
-        transport: "긴자선 → 아사쿠사역",
-        duration: "2시간",
-        price: "무료",
-        photo: true,
-      },
-      {
-        time: "오후 3:00",
-        title: "스카이트리",
-        subtitle: "東京スカイツリー",
-        type: "관광",
-        transport: "도보 20분",
-        duration: "2시간",
-        price: "₩25,000원",
-        photo: true,
-      },
-      {
-        time: "오후 6:00",
-        title: "저녁 - 야키니쿠",
-        subtitle: "긴자 야키니쿠 (銀座 焼肉)",
-        type: "식사",
-        transport: "긴자선 → 긴자역",
-        duration: "2시간",
-        price: "₩45,000원",
-        category: "일식",
-      },
-    ],
-  },
-  {
-    day: 3,
-    title: "3일차",
-    date: "2025년 3월 17일 (월)",
-    activities: [
-      {
-        time: "오전 9:00",
-        title: "우에노 공원",
-        subtitle: "上野公園",
-        type: "관광",
-        transport: "야마노테선 → 우에노역",
-        duration: "2시간",
-        price: "무료",
-        photo: true,
-      },
-      {
-        time: "오전 11:00",
-        title: "아메요코 시장",
-        subtitle: "アメ横",
-        type: "쇼핑",
-        transport: "도보 5분",
-        duration: "2시간",
-        price: "변동",
-        photo: false,
-      },
-      {
-        time: "오후 1:00",
-        title: "점심 - 돈카츠",
-        subtitle: "토키 (とんき)",
-        type: "식사",
-        transport: "메구로역",
-        duration: "1시간",
-        price: "₩18,000원",
-        category: "일식",
-      },
-      {
-        time: "오후 3:00",
-        title: "긴자 쇼핑",
-        subtitle: "銀座",
-        type: "쇼핑",
-        transport: "긴자선 → 긴자역",
-        duration: "3시간",
-        price: "변동",
-        photo: false,
-      },
-      {
-        time: "오후 7:00",
-        title: "저녁 - 스시",
-        subtitle: "긴자 스시 (銀座 寿司)",
-        type: "식사",
-        transport: "도보 10분",
-        duration: "2시간",
-        price: "₩80,000원",
-        category: "일식",
-      },
-    ],
-  },
-];
+interface Activity {
+  time: string;
+  title: string;
+  subtitle: string;
+  type: string;
+  transport: string;
+  duration: string;
+  price: string;
+  photo: boolean;
+  category?: string;
+}
+
+interface DayItinerary {
+  day: number;
+  title: string;
+  date: string;
+  activities: Activity[];
+}
+
+interface TravelPlan {
+  id: string;
+  title: string;
+  destination: string;
+  start_date: string;
+  end_date: string;
+  budget: number;
+  currency: string;
+  itinerary: DayItinerary[];
+  travel_style?: string[];
+  status: string;
+}
 
 export default function ResultsPage() {
+  const searchParams = useSearchParams();
+  const planId = searchParams.get("id");
+
+  const [travelPlan, setTravelPlan] = useState<TravelPlan | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeDay, setActiveDay] = useState(1);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingActivity, setEditingActivity] = useState<number | null>(null);
-  const [localItinerary, setLocalItinerary] = useState(tokyoItinerary);
+  const [localItinerary, setLocalItinerary] = useState<DayItinerary[]>([]);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    if (planId) {
+      fetchTravelPlan(planId);
+    } else {
+      setIsLoading(false);
+      toast({
+        title: "오류",
+        description: "여행 계획 ID가 필요합니다.",
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planId]);
+
+  const fetchTravelPlan = async (id: string) => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`/api/travel-plans/${id}`);
+
+      if (!response.ok) {
+        throw new Error("여행 계획을 불러올 수 없습니다");
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        setTravelPlan(result.data);
+        setLocalItinerary(result.data.itinerary || []);
+      } else {
+        throw new Error("여행 계획 데이터가 올바르지 않습니다");
+      }
+    } catch (error) {
+      console.error("여행 계획 불러오기 실패:", error);
+      toast({
+        title: "오류",
+        description: "여행 계획을 불러오는데 실패했습니다.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const currentDay = localItinerary.find((d) => d.day === activeDay) || localItinerary[0];
+
+  if (isLoading) {
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen bg-gradient-to-b from-accent/30 via-background to-background flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-lg font-semibold text-foreground">여행 계획을 불러오는 중...</p>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
+  if (!travelPlan) {
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen bg-gradient-to-b from-accent/30 via-background to-background flex items-center justify-center">
+          <div className="text-center">
+            <MapPin className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-foreground mb-2">여행 계획을 찾을 수 없습니다</h2>
+            <p className="text-muted-foreground mb-6">요청하신 여행 계획이 존재하지 않거나 삭제되었습니다.</p>
+            <Link href="/">
+              <Button variant="default" className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                메인으로 돌아가기
+              </Button>
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const days = ["일", "월", "화", "수", "목", "금", "토"];
+    return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일 (${days[date.getDay()]})`;
+  };
 
   const handleDeleteActivity = (dayNum: number, activityIdx: number) => {
     setLocalItinerary(
@@ -228,7 +187,7 @@ export default function ResultsPage() {
   };
 
   const handleAddActivity = (dayNum: number) => {
-    const newActivity = {
+    const newActivity: Activity = {
       time: "시간 선택",
       title: "새 장소",
       subtitle: "",
@@ -276,13 +235,38 @@ export default function ResultsPage() {
     );
   };
 
-  const handleSave = () => {
-    setIsEditMode(false);
-    setEditingActivity(null);
-    toast({
-      title: "저장되었습니다",
-      description: "여행 계획이 성공적으로 저장되었습니다.",
-    });
+  const handleSave = async () => {
+    if (!travelPlan?.id) return;
+
+    try {
+      const response = await fetch(`/api/travel-plans/${travelPlan.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...travelPlan,
+          itinerary: localItinerary,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("저장에 실패했습니다");
+      }
+
+      setIsEditMode(false);
+      setEditingActivity(null);
+      toast({
+        title: "저장되었습니다",
+        description: "여행 계획이 성공적으로 저장되었습니다.",
+      });
+    } catch (error) {
+      console.error("저장 실패:", error);
+      toast({
+        title: "저장 실패",
+        description: "여행 계획 저장에 실패했습니다.",
+      });
+    }
   };
 
   const handleSaveToMyTrips = () => {
@@ -354,7 +338,9 @@ export default function ResultsPage() {
                       onClick={() => {
                         setIsEditMode(false);
                         setEditingActivity(null);
-                        setLocalItinerary(tokyoItinerary);
+                        if (travelPlan) {
+                          setLocalItinerary(travelPlan.itinerary);
+                        }
                       }}
                     >
                       <X className="h-4 w-4" />
@@ -376,18 +362,20 @@ export default function ResultsPage() {
                     AI 추천 여행 일정
                   </div>
                   <h1 className="mb-3 text-3xl font-bold text-foreground md:text-4xl flex items-center gap-2">
-                    도쿄 3일 여행 코스
+                    {travelPlan.title}
                     <GiJapan className="h-8 w-8 text-primary" />
                   </h1>
                   <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-5 w-5" />
-                      <span>2025년 3월 15일 - 3월 17일</span>
+                      <span>
+                        {formatDate(travelPlan.start_date)} - {formatDate(travelPlan.end_date)}
+                      </span>
                     </div>
                     <span>•</span>
                     <div className="flex items-center gap-2">
                       <MapPin className="h-5 w-5" />
-                      <span>도쿄, 일본</span>
+                      <span>{travelPlan.destination}</span>
                     </div>
                   </div>
                 </div>
@@ -405,7 +393,9 @@ export default function ResultsPage() {
                     <DollarSign className="h-6 w-6 text-primary" />
                     <div>
                       <p className="text-xs text-muted-foreground md:text-sm">예상 경비</p>
-                      <p className="text-lg font-bold text-primary md:text-xl">₩850,000원</p>
+                      <p className="text-lg font-bold text-primary md:text-xl">
+                        ₩{travelPlan.budget?.toLocaleString() || "0"}원
+                      </p>
                     </div>
                   </Card>
                 </div>

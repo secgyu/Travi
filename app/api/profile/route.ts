@@ -15,7 +15,7 @@ function createServerSupabaseClient() {
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || !session.user) {
       return NextResponse.json(
         { error: "인증되지 않은 사용자입니다" },
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = createServerSupabaseClient();
-    
+
     const { data: user, error } = await supabase
       .from("users")
       .select("*")
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || !session.user) {
       return NextResponse.json(
         { error: "인증되지 않은 사용자입니다" },
@@ -90,9 +90,9 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      user: updatedUser 
+    return NextResponse.json({
+      success: true,
+      user: updatedUser
     });
   } catch (error) {
     console.error("프로필 업데이트 오류:", error);
