@@ -84,7 +84,7 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account }) {
-      // OAuth 로그인 시 Supabase DB에 사용자 저장
+      // OAuth 로그인 시 Supabase DB에 사용자 저장/조회
       if (account?.provider !== "credentials") {
         try {
           const supabase = createServerSupabaseClient();
@@ -93,26 +93,19 @@ export const authOptions: NextAuthOptions = {
             provider: account?.provider,
             email: user.email,
             name: user.name,
-            id: user.id,
           });
 
-          // 기존 사용자 확인 (.maybeSingle()로 변경 - 결과가 없어도 에러 발생 안함)
+          // 기존 사용자 확인 (이메일로 조회)
           const { data: existingUser, error: selectError } = await supabase
             .from("users")
             .select("*")
             .eq("email", user.email)
             .maybeSingle();
 
-          console.log("🔍 Existing user check:", {
-            exists: !!existingUser,
-            email: user.email,
-            selectError: selectError?.message,
-          });
-
           if (!existingUser) {
             console.log("✨ Creating new user...");
 
-            // 새 사용자 생성 (id 제거 - DB가 자동으로 UUID 생성)
+            // 새 사용자 생성 - DB가 UUID를 자동 생성
             const { data: newUser, error: insertError } = await supabase
               .from("users")
               .insert({
@@ -125,42 +118,49 @@ export const authOptions: NextAuthOptions = {
               .single();
 
             if (insertError) {
-              console.error("❌ Failed to insert user:", {
-                error: insertError,
-                message: insertError.message,
-                details: insertError.details,
-                hint: insertError.hint,
-              });
-            } else {
-              console.log("✅ New user created successfully:", {
-                id: newUser?.id,
-                email: newUser?.email,
-              });
+              console.error("❌ Failed to insert user:", insertError);
+              return false; // 로그인 차단
             }
+
+            console.log("✅ New user created:", newUser?.id);
+            // DB의 UUID를 user 객체에 저장 (JWT 콜백에서 사용)
+            user.id = newUser!.id;
           } else {
-            console.log("👤 Existing user found, skipping insert");
+            console.log("👤 Existing user found:", existingUser.id);
+            // 기존 사용자의 DB UUID를 user 객체에 저장
+            user.id = existingUser.id;
           }
         } catch (error) {
           console.error("💥 Error in signIn callback:", error);
+          return false; // 로그인 차단
         }
       }
 
       return true;
     },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub!;
-      }
-      return session;
-    },
     async jwt({ token, user, account }) {
+      // 최초 로그인 시 user 정보를 token에 저장
       if (user) {
-        token.id = user.id;
+        token.userId = user.id; // Supabase DB의 UUID
+        token.email = user.email;
+        token.name = user.name;
+        token.picture = user.image;
       }
       if (account) {
         token.accessToken = account.access_token;
+        token.provider = account.provider;
       }
       return token;
+    },
+    async session({ session, token }) {
+      // 세션에 DB UUID 포함
+      if (session.user) {
+        session.user.id = token.userId as string;
+        session.user.email = token.email as string;
+        session.user.name = token.name as string;
+        session.user.image = token.picture as string;
+      }
+      return session;
     },
   },
   session: {

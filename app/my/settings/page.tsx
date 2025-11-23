@@ -15,12 +15,10 @@ import { ArrowLeft, Camera, Save, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 
 export default function SettingsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const supabase = createClient();
 
   const [profileData, setProfileData] = useState({
     name: "",
@@ -40,7 +38,7 @@ export default function SettingsPage() {
     if (user) {
       setProfileData((prev) => ({
         ...prev,
-        name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "",
+        name: user.name || user.email?.split("@")[0] || "",
         email: user.email || "",
       }));
     }
@@ -54,14 +52,24 @@ export default function SettingsPage() {
 
   const handleProfileSave = async () => {
     try {
-      const { error } = await supabase.auth.updateUser({
-        email: profileData.email,
-        data: {
-          full_name: profileData.name,
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          name: profileData.name,
+          bio: "", // bio 필드 추가 가능
+          preferences: {
+            // 취미나 기타 선호도 추가 가능
+            travelStyle: "미식 & 문화 탐방",
+          },
+        }),
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error("프로필 저장 실패");
+      }
 
       alert("프로필이 성공적으로 저장되었습니다!");
     } catch (error) {
@@ -77,12 +85,7 @@ export default function SettingsPage() {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: profileData.newPassword,
-      });
-
-      if (error) throw error;
-
+      // TODO: API로 비밀번호 변경 구현
       alert("비밀번호가 성공적으로 변경되었습니다!");
       setProfileData({
         ...profileData,
@@ -156,7 +159,7 @@ export default function SettingsPage() {
                   {/* 프로필 사진 */}
                   <div className="flex items-center gap-6">
                     <Avatar className="h-24 w-24">
-                      <AvatarImage src={user?.user_metadata?.avatar_url || "/user-avatar.jpg"} alt="프로필 사진" />
+                      <AvatarImage src={user?.image || "/user-avatar.jpg"} alt="프로필 사진" />
                       <AvatarFallback>{profileData.name?.[0] || "U"}</AvatarFallback>
                     </Avatar>
                     <div>

@@ -7,28 +7,37 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Settings, MapPin, Calendar, Heart, Clock, Edit, Trash2, Share2 } from "lucide-react";
 import Link from "next/link";
-import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { createClient } from "@/utils/supabase/server";
 
 export default async function MyPage() {
-  const supabase = await createClient();
+  // 1. NextAuth 세션 확인
+  const session = await getServerSession(authOptions);
 
-  const {
-    data: { user: authUser },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !authUser) {
+  if (!session || !session.user) {
     redirect("/login");
   }
 
+  // 2. Supabase DB에서 추가 프로필 정보 가져오기
+  const supabase = await createClient();
+  const { data: dbUser } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", session.user.id)
+    .single();
+
   const user = {
-    name:
-      authUser.user_metadata?.full_name || authUser.user_metadata?.name || authUser.email?.split("@")[0] || "사용자",
-    email: authUser.email || "",
-    profileImage: authUser.user_metadata?.avatar_url || "/user-avatar.jpg",
-    travelStyle: authUser.user_metadata?.travel_style || "미식 & 문화 탐방",
-    memberSince: new Date(authUser.created_at).toLocaleDateString("ko-KR", { year: "numeric", month: "long" }),
+    name: session.user.name || session.user.email?.split("@")[0] || "사용자",
+    email: session.user.email || "",
+    profileImage: session.user.image || "/user-avatar.jpg",
+    // DB에서 가져온 추가 정보
+    travelStyle: dbUser?.preferences?.travelStyle || "미식 & 문화 탐방",
+    bio: dbUser?.bio || "",
+    memberSince: dbUser?.created_at 
+      ? new Date(dbUser.created_at).toLocaleDateString("ko-KR", { year: "numeric", month: "long" })
+      : "2025년 11월",
   };
 
   const trips = [
