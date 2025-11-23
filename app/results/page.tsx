@@ -36,7 +36,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { GiJapan } from "react-icons/gi";
-import KakaoMap from "./KakaoMap";
+import GoogleMap from "./GoogleMap";
 
 interface Activity {
   time: string;
@@ -48,6 +48,10 @@ interface Activity {
   price: string;
   photo: boolean;
   category?: string;
+  lat?: number; // GPS 위도
+  lng?: number; // GPS 경도
+  address?: string; // 주소
+  gps_confidence?: "high" | "medium" | "low"; // GPS 정확도
 }
 
 interface DayItinerary {
@@ -538,6 +542,39 @@ export default function ResultsPage() {
                               <h3 className="mb-1 text-lg font-bold text-foreground md:text-xl">{activity.title}</h3>
                               <p className="mb-3 text-sm text-muted-foreground md:text-base">{activity.subtitle}</p>
 
+                              {/* GPS 좌표 표시 */}
+                              {activity.lat && activity.lng && (
+                                <div className="mb-3 rounded-lg bg-accent/50 px-3 py-2">
+                                  <div className="flex items-center gap-2 text-xs">
+                                    <MapPin className="h-3 w-3 text-primary" />
+                                    <span className="font-mono text-muted-foreground">
+                                      {activity.lat.toFixed(6)}, {activity.lng.toFixed(6)}
+                                    </span>
+                                    {activity.gps_confidence && (
+                                      <Badge
+                                        variant="outline"
+                                        className={`text-[10px] ${
+                                          activity.gps_confidence === "high"
+                                            ? "border-green-600 text-green-600"
+                                            : activity.gps_confidence === "medium"
+                                            ? "border-yellow-600 text-yellow-600"
+                                            : "border-orange-600 text-orange-600"
+                                        }`}
+                                      >
+                                        {activity.gps_confidence === "high"
+                                          ? "정확"
+                                          : activity.gps_confidence === "medium"
+                                          ? "근사"
+                                          : "추정"}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  {activity.address && (
+                                    <p className="mt-1 text-xs text-muted-foreground">{activity.address}</p>
+                                  )}
+                                </div>
+                              )}
+
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2 text-sm text-foreground">
                                   <Train className="h-4 w-4 text-secondary" />
@@ -589,17 +626,66 @@ export default function ResultsPage() {
                 <div className="lg:col-span-3">
                   <Card className="sticky top-24 h-[400px] overflow-hidden border-0 shadow-xl lg:h-[800px]">
                     <div className="relative h-full w-full bg-gradient-to-br from-accent/20 to-secondary/20">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
-                          <MapPin className="mx-auto mb-4 h-16 w-16 text-primary" />
-                          <p className="text-lg font-semibold text-foreground">네이버 지도 연동</p>
-                          <p className="mt-2 text-sm text-muted-foreground">
-                            실제 서비스에서는 네이버 지도 API를 통해
-                            <br />
-                            상세한 위치 정보를 표시합니다
-                          </p>
+                      {/* GPS 좌표가 있는 장소 표시 */}
+                      {currentDay.activities.some((a) => a.lat && a.lng) ? (
+                        <>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="text-center">
+                              <MapPin className="mx-auto mb-4 h-16 w-16 text-primary" />
+                              <p className="text-lg font-semibold text-foreground">지도 표시 준비됨</p>
+                              <p className="mt-2 text-sm text-muted-foreground px-4">
+                                {currentDay.activities.filter((a) => a.lat && a.lng).length}개 장소의 GPS 좌표가
+                                있습니다
+                                <br />
+                                Kakao 또는 Google Maps API를 연동하면 지도에 표시됩니다
+                              </p>
+                              {/* GPS 좌표 미리보기 */}
+                              <div className="mt-4 max-h-40 overflow-y-auto text-xs text-left bg-background/80 rounded-lg p-3 mx-4">
+                                {currentDay.activities.map((activity, idx) =>
+                                  activity.lat && activity.lng ? (
+                                    <div key={idx} className="mb-2 flex items-center gap-2">
+                                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                                        {idx + 1}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="truncate font-medium">{activity.title}</p>
+                                        <p className="text-muted-foreground">
+                                          {activity.lat.toFixed(6)}, {activity.lng.toFixed(6)}
+                                          {activity.gps_confidence && (
+                                            <span
+                                              className={`ml-2 ${
+                                                activity.gps_confidence === "high"
+                                                  ? "text-green-600"
+                                                  : activity.gps_confidence === "medium"
+                                                  ? "text-yellow-600"
+                                                  : "text-orange-600"
+                                              }`}
+                                            >
+                                              ({activity.gps_confidence})
+                                            </span>
+                                          )}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  ) : null
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-center">
+                            <MapPin className="mx-auto mb-4 h-16 w-16 text-muted-foreground" />
+                            <p className="text-lg font-semibold text-foreground">GPS 좌표가 없습니다</p>
+                            <p className="mt-2 text-sm text-muted-foreground px-4">
+                              AI 채팅으로 생성된 일정은 자동으로 GPS 좌표를 포함합니다
+                              <br />
+                              지도 API를 설정하면 실제 위치를 표시할 수 있습니다
+                            </p>
+                          </div>
                         </div>
-                      </div>
+                      )}
                       <div className="absolute bottom-3 left-3 right-3 space-y-3 md:bottom-6 md:left-6 md:right-6">
                         {currentDay.activities.slice(0, 2).map((activity, idx) => (
                           <div
@@ -613,7 +699,15 @@ export default function ResultsPage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="truncate font-semibold text-foreground">{activity.title}</p>
-                                <p className="truncate text-sm text-muted-foreground">{activity.time}</p>
+                                <p className="truncate text-sm text-muted-foreground">
+                                  {activity.time}
+                                  {
+                                    <span className="ml-2 text-xs">
+                                      📍 GPS{" "}
+                                      {activity.lat && activity.lng ? `있음${activity.lat},${activeDay.lng}` : "없음"}
+                                    </span>
+                                  }
+                                </p>
                               </div>
                               {activity.photo && <Camera className="h-5 w-5 shrink-0 text-cta-foreground" />}
                             </div>
@@ -668,7 +762,7 @@ export default function ResultsPage() {
               </div>
             </div>
           </div>
-          <KakaoMap center={{ lat: 37.123, lng: 127.123 }} level={3} />
+          <GoogleMap center={{ lat: currentDay.activities[0].lat, lng: currentDay.activities[0].lng }} level={15} />
         </main>
 
         <Footer />

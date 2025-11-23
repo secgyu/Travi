@@ -369,6 +369,52 @@ export default function ChatPage() {
       console.log("=== 누적 파싱된 일정 ===");
       console.log(JSON.stringify(itinerary, null, 2));
 
+      // 🆕 GPS 좌표 추가 - 모든 장소에 대해 geocoding
+      console.log("=== GPS 좌표 조회 시작 ===");
+      const enrichedItinerary = await Promise.all(
+        itinerary.map(async (day) => ({
+          ...day,
+          activities: await Promise.all(
+            day.activities.map(async (activity) => {
+              try {
+                // Geocoding API 호출
+                const response = await fetch('/api/geocode', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    title: activity.title,
+                    subtitle: activity.subtitle,
+                    destination: travelInfo.destination,
+                  }),
+                });
+
+                if (response.ok) {
+                  const result = await response.json();
+                  if (result.success && result.data) {
+                    console.log(`✅ ${activity.title}: ${result.data.lat}, ${result.data.lng} (${result.data.confidence})`);
+                    return {
+                      ...activity,
+                      lat: result.data.lat,
+                      lng: result.data.lng,
+                      address: result.data.address,
+                      gps_confidence: result.data.confidence,
+                    };
+                  }
+                }
+
+                // 실패 시 원본 반환
+                console.warn(`⚠️ ${activity.title}: GPS 조회 실패`);
+                return activity;
+              } catch (error) {
+                console.error(`❌ ${activity.title}: GPS 조회 오류`, error);
+                return activity;
+              }
+            })
+          ),
+        }))
+      );
+      console.log("=== GPS 좌표 조회 완료 ===");
+
       // 날짜 계산
       const today = new Date();
       const startDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000); // 7일 후
@@ -383,12 +429,12 @@ export default function ChatPage() {
         currency: "KRW",
         travel_style: travelInfo.styles,
         companions: "AI 추천",
-        itinerary,
+        itinerary: enrichedItinerary, // GPS 포함된 일정
         notes: "AI 채팅으로 생성된 여행 계획",
         is_public: true,
       };
 
-      console.log("=== 전송할 데이터 ===");
+      console.log("=== 전송할 데이터 (GPS 포함) ===");
       console.log(JSON.stringify(travelPlanData, null, 2));
 
       // 여행 계획 저장
@@ -521,7 +567,7 @@ export default function ChatPage() {
                       {isSaving ? (
                         <>
                           <Loader2 className="h-5 w-5 animate-spin" />
-                          저장 중...
+                          GPS 위치 조회 중...
                         </>
                       ) : (
                         <>
