@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    
-    // 인증 확인 (선택사항 - 비로그인 사용자도 생성 가능하게)
-    const { data: { user } } = await supabase.auth.getUser();
-    
+    const session = await getServerSession(authOptions);
+    const user = session?.user;
     const body = await request.json();
     const {
       title,
@@ -23,7 +23,6 @@ export async function POST(request: NextRequest) {
       is_public = true,
     } = body;
 
-    // 필수 필드 검증
     if (!title || !destination || !start_date || !end_date || !itinerary) {
       return NextResponse.json(
         { error: "필수 필드가 누락되었습니다" },
@@ -31,11 +30,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 비로그인 사용자를 위한 guest 사용자 처리
     let userId = user?.id;
-    
+
+    if (user?.email) {
+      const { data: dbUser } = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", user.email)
+        .single();
+
+      if (dbUser) {
+        userId = dbUser.id;
+      } else {
+        const { data: newUser, error: createError } = await supabase
+          .from("users")
+          .insert({
+            email: user.email,
+            name: user.name || user.email.split("@")[0],
+            provider: "nextauth",
+            avatar_url: user.image,
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error("❌ [API] 사용자 생성 실패:", createError);
+        } else {
+          userId = newUser.id;
+          console.log("✅ [API] 새 사용자 생성 완료:", userId);
+        }
+      }
+    }
+
     if (!userId) {
-      // Guest 사용자 생성 또는 조회
       const { data: guestUser } = await supabase
         .from("users")
         .select()
@@ -67,7 +94,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 여행 계획 생성
     const { data: travelPlan, error: insertError } = await supabase
       .from("travel_plans")
       .insert({
@@ -91,7 +117,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError) {
-      console.error("여행 계획 생성 실패:", insertError);
       return NextResponse.json(
         { error: "여행 계획 생성에 실패했습니다" },
         { status: 500 }
@@ -102,8 +127,7 @@ export async function POST(request: NextRequest) {
       success: true,
       data: travelPlan,
     });
-  } catch (error) {
-    console.error("여행 계획 생성 중 오류:", error);
+  } catch {
     return NextResponse.json(
       { error: "서버 오류가 발생했습니다" },
       { status: 500 }
@@ -115,7 +139,6 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
-    
     const limit = parseInt(searchParams.get("limit") || "10");
     const offset = parseInt(searchParams.get("offset") || "0");
     const userId = searchParams.get("user_id");
@@ -145,7 +168,6 @@ export async function GET(request: NextRequest) {
     const { data: travelPlans, error, count } = await query;
 
     if (error) {
-      console.error("여행 계획 목록 조회 실패:", error);
       return NextResponse.json(
         { error: "여행 계획 목록을 불러올 수 없습니다" },
         { status: 500 }
@@ -159,12 +181,10 @@ export async function GET(request: NextRequest) {
       limit,
       offset,
     });
-  } catch (error) {
-    console.error("여행 계획 목록 조회 중 오류:", error);
+  } catch {
     return NextResponse.json(
       { error: "서버 오류가 발생했습니다" },
       { status: 500 }
     );
   }
 }
-

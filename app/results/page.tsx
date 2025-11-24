@@ -35,7 +35,6 @@ import {
   Banknote,
   Loader2,
 } from "lucide-react";
-import { GiJapan } from "react-icons/gi";
 import GoogleMap from "./GoogleMap";
 
 interface Activity {
@@ -48,10 +47,10 @@ interface Activity {
   price: string;
   photo: boolean;
   category?: string;
-  lat?: number; // GPS 위도
-  lng?: number; // GPS 경도
-  address?: string; // 주소
-  gps_confidence?: "high" | "medium" | "low"; // GPS 정확도
+  lat?: number;
+  lng?: number;
+  address?: string;
+  gps_confidence?: "high" | "medium" | "low";
 }
 
 interface DayItinerary {
@@ -368,7 +367,6 @@ export default function ResultsPage() {
                   </div>
                   <h1 className="mb-3 text-3xl font-bold text-foreground md:text-4xl flex items-center gap-2">
                     {travelPlan.title}
-                    <GiJapan className="h-8 w-8 text-primary" />
                   </h1>
                   <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                     <div className="flex items-center gap-2">
@@ -703,8 +701,7 @@ export default function ResultsPage() {
                                   {activity.time}
                                   {
                                     <span className="ml-2 text-xs">
-                                      📍 GPS{" "}
-                                      {activity.lat && activity.lng ? `있음${activity.lat},${activeDay.lng}` : "없음"}
+                                      📍 GPS {activity.lat && activity.lng ? "있음" : "없음"}
                                     </span>
                                   }
                                 </p>
@@ -762,7 +759,19 @@ export default function ResultsPage() {
               </div>
             </div>
           </div>
-          <GoogleMap center={{ lat: currentDay.activities[0].lat, lng: currentDay.activities[0].lng }} level={15} />
+          {currentDay &&
+          currentDay.activities &&
+          currentDay.activities.length > 0 &&
+          currentDay.activities[0].lat &&
+          currentDay.activities[0].lng ? (
+            <GoogleMap
+              center={{
+                lat: currentDay.activities[0].lat,
+                lng: currentDay.activities[0].lng,
+              }}
+              level={15}
+            />
+          ) : null}
         </main>
 
         <Footer />

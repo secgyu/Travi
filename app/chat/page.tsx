@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
+import { DefaultChatTransport, UIMessage } from "ai";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { Send, MapPin, Sparkles, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -14,8 +14,7 @@ import { MdWavingHand } from "react-icons/md";
 import { FaLandmark } from "react-icons/fa";
 import { useToast } from "@/hooks/use-toast";
 
-// AI 응답에서 여행 계획 정보 추출
-function extractTravelPlanInfo(messages: any[]) {
+function extractTravelPlanInfo(messages: UIMessage[]) {
   const conversationText = messages
     .map((m) =>
       m.parts
@@ -25,24 +24,20 @@ function extractTravelPlanInfo(messages: any[]) {
     )
     .join("\n");
 
-  // 여행지 추출 (예: "도쿄", "오사카", "파리" 등)
   const destinationMatch = conversationText.match(
     /(도쿄|오사카|파리|방콕|뉴욕|런던|바르셀로나|로마|싱가포르|홍콩|타이베이|다낭)[^가-힣]*(여행|가|방문)/
   );
   const destination = destinationMatch ? destinationMatch[1] : "여행지";
 
-  // 여행 기간 추출 (예: "3일", "2박 3일" 등)
   const durationMatch = conversationText.match(/(\d+)일/);
   const duration = durationMatch ? parseInt(durationMatch[1]) : 3;
 
-  // 예산 추출 (예: "100만원", "1000000원" 등)
   const budgetMatch = conversationText.match(/(\d+)만원|(\d{6,})원/);
   let budget = 1000000;
   if (budgetMatch) {
     budget = budgetMatch[1] ? parseInt(budgetMatch[1]) * 10000 : parseInt(budgetMatch[2]);
   }
 
-  // 여행 스타일 추출
   const styles: string[] = [];
   if (conversationText.includes("맛집") || conversationText.includes("음식")) styles.push("음식");
   if (conversationText.includes("관광") || conversationText.includes("명소")) styles.push("관광");
@@ -58,11 +53,9 @@ function extractTravelPlanInfo(messages: any[]) {
   };
 }
 
-// AI 응답에서 일정 파싱 (개선된 버전)
 function parseItinerary(messageText: string, duration: number) {
   const itinerary: any[] = [];
 
-  // 1단계: 일차별로 분리
   const lines = messageText.split("\n");
   let currentDay: number | null = null;
   let currentActivities: any[] = [];
@@ -71,10 +64,8 @@ function parseItinerary(messageText: string, duration: number) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
 
-    // 일차 감지: "**1일차" 또는 "1일차 -" 형식
     const dayMatch = line.match(/\*?\*?(\d+)일차/);
     if (dayMatch) {
-      // 이전 일차 데이터 저장
       if (currentDay !== null && currentActivities.length > 0) {
         itinerary.push({
           day: currentDay,
@@ -84,17 +75,14 @@ function parseItinerary(messageText: string, duration: number) {
         });
       }
 
-      // 새로운 일차 시작
       currentDay = parseInt(dayMatch[1]);
       currentActivities = [];
       currentActivity = null;
       continue;
     }
 
-    // 활동 시간 감지: "오전 9:00 -" 형식
     const timeMatch = line.match(/(오전|오후|저녁)\s*(\d{1,2}):(\d{2})\s*[-–—]\s*(.+)/);
     if (timeMatch && currentDay !== null) {
-      // 이전 활동 저장
       if (currentActivity) {
         currentActivities.push(currentActivity);
       }
@@ -103,13 +91,10 @@ function parseItinerary(messageText: string, duration: number) {
       const hour = timeMatch[2];
       const minute = timeMatch[3];
       const titleRaw = timeMatch[4].trim();
-
-      // 제목과 부제목 분리
       const titleParts = titleRaw.split("(");
       const title = titleParts[0].trim();
       const subtitle = titleParts[1] ? titleParts[1].replace(")", "").trim() : "";
 
-      // 새 활동 초기화
       currentActivity = {
         time: `${period} ${hour}:${minute}`,
         title: title,
@@ -121,7 +106,6 @@ function parseItinerary(messageText: string, duration: number) {
         photo: false,
       };
 
-      // 타입 자동 감지
       const titleLower = title.toLowerCase();
       if (
         titleLower.includes("식사") ||
@@ -147,9 +131,7 @@ function parseItinerary(messageText: string, duration: number) {
       continue;
     }
 
-    // 활동이 있을 때만 상세 정보 파싱
     if (currentActivity) {
-      // 이동 방법
       if (line.includes("이동:")) {
         const transportMatch = line.match(/이동:\s*(.+)/);
         if (transportMatch) {
@@ -157,7 +139,6 @@ function parseItinerary(messageText: string, duration: number) {
         }
       }
 
-      // 소요 시간
       if (line.includes("소요:")) {
         const durationMatch = line.match(/소요:\s*(.+)/);
         if (durationMatch) {
@@ -165,7 +146,6 @@ function parseItinerary(messageText: string, duration: number) {
         }
       }
 
-      // 비용
       if (line.includes("비용:")) {
         const priceMatch = line.match(/비용:\s*(.+)/);
         if (priceMatch) {
@@ -173,14 +153,12 @@ function parseItinerary(messageText: string, duration: number) {
         }
       }
 
-      // 포토존
       if (line.includes("📸")) {
         currentActivity.photo = true;
       }
     }
   }
 
-  // 마지막 일차 저장
   if (currentDay !== null) {
     if (currentActivity) {
       currentActivities.push(currentActivity);
@@ -195,9 +173,7 @@ function parseItinerary(messageText: string, duration: number) {
     }
   }
 
-  // 일정이 비어있으면 기본값 생성
   if (itinerary.length === 0) {
-    console.warn("⚠️ 일정 파싱 실패, 기본 일정 생성");
     for (let i = 1; i <= duration; i++) {
       itinerary.push({
         day: i,
@@ -222,11 +198,9 @@ function parseItinerary(messageText: string, duration: number) {
   return itinerary;
 }
 
-// 모든 assistant 메시지를 누적 파싱 (개선된 버전)
 function parseAllMessages(messages: any[], duration: number) {
-  const allItineraries = new Map<number, any>(); // day -> 일차 데이터
+  const allItineraries = new Map<number, any>();
 
-  // 모든 assistant 메시지를 순회
   for (const message of messages) {
     if (message.role === "assistant") {
       const messageText = message.parts
@@ -234,20 +208,16 @@ function parseAllMessages(messages: any[], duration: number) {
         .map((p: any) => p.text)
         .join("");
 
-      // 이 메시지에서 파싱된 일차들
       const parsed = parseItinerary(messageText, duration);
 
-      // 각 일차를 Map에 저장 (중복되면 최신 것으로 덮어쓰기)
       for (const dayData of parsed) {
         allItineraries.set(dayData.day, dayData);
       }
     }
   }
 
-  // Map을 배열로 변환하고 day 순으로 정렬
   const result = Array.from(allItineraries.values()).sort((a, b) => a.day - b.day);
 
-  // 일정이 비어있으면 기본값 생성
   if (result.length === 0) {
     console.warn("⚠️ 모든 메시지에서 일정 파싱 실패, 기본 일정 생성");
     for (let i = 1; i <= duration; i++) {
@@ -270,7 +240,6 @@ function parseAllMessages(messages: any[], duration: number) {
       });
     }
   }
-
   return result;
 }
 
@@ -287,12 +256,10 @@ export default function ChatPage() {
   });
 
   const showResultsButton = useMemo(() => {
-    // AI가 응답 중이면 버튼 표시 안 함
     if (status === "streaming") {
       return false;
     }
 
-    // AI 응답이 완료된 후에만 체크
     if (messages.length >= 2) {
       const lastMessage = messages[messages.length - 1];
       if (lastMessage.role === "assistant") {
@@ -357,30 +324,18 @@ export default function ChatPage() {
     try {
       setIsSaving(true);
 
-      console.log("=== 전체 메시지 ===");
-      console.log(`총 ${messages.length}개 메시지`);
-
       const travelInfo = extractTravelPlanInfo(messages);
-      console.log("=== 추출된 여행 정보 ===");
-      console.log(travelInfo);
-
-      // 모든 메시지를 누적 파싱 (개선!)
       const itinerary = parseAllMessages(messages, travelInfo.duration);
-      console.log("=== 누적 파싱된 일정 ===");
-      console.log(JSON.stringify(itinerary, null, 2));
 
-      // 🆕 GPS 좌표 추가 - 모든 장소에 대해 geocoding
-      console.log("=== GPS 좌표 조회 시작 ===");
       const enrichedItinerary = await Promise.all(
         itinerary.map(async (day) => ({
           ...day,
           activities: await Promise.all(
             day.activities.map(async (activity) => {
               try {
-                // Geocoding API 호출
-                const response = await fetch('/api/geocode', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                const response = await fetch("/api/geocode", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     title: activity.title,
                     subtitle: activity.subtitle,
@@ -391,7 +346,6 @@ export default function ChatPage() {
                 if (response.ok) {
                   const result = await response.json();
                   if (result.success && result.data) {
-                    console.log(`✅ ${activity.title}: ${result.data.lat}, ${result.data.lng} (${result.data.confidence})`);
                     return {
                       ...activity,
                       lat: result.data.lat,
@@ -402,7 +356,6 @@ export default function ChatPage() {
                   }
                 }
 
-                // 실패 시 원본 반환
                 console.warn(`⚠️ ${activity.title}: GPS 조회 실패`);
                 return activity;
               } catch (error) {
@@ -415,9 +368,8 @@ export default function ChatPage() {
       );
       console.log("=== GPS 좌표 조회 완료 ===");
 
-      // 날짜 계산
       const today = new Date();
-      const startDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000); // 7일 후
+      const startDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
       const endDate = new Date(startDate.getTime() + (travelInfo.duration - 1) * 24 * 60 * 60 * 1000);
 
       const travelPlanData = {
@@ -429,7 +381,7 @@ export default function ChatPage() {
         currency: "KRW",
         travel_style: travelInfo.styles,
         companions: "AI 추천",
-        itinerary: enrichedItinerary, // GPS 포함된 일정
+        itinerary: enrichedItinerary,
         notes: "AI 채팅으로 생성된 여행 계획",
         is_public: true,
       };
@@ -437,7 +389,6 @@ export default function ChatPage() {
       console.log("=== 전송할 데이터 (GPS 포함) ===");
       console.log(JSON.stringify(travelPlanData, null, 2));
 
-      // 여행 계획 저장
       const response = await fetch("/api/travel-plans", {
         method: "POST",
         headers: {
@@ -461,7 +412,6 @@ export default function ChatPage() {
         description: "상세 일정 페이지로 이동합니다.",
       });
 
-      // 결과 페이지로 리다이렉트
       router.push(`/results?id=${result.data.id}`);
     } catch (error) {
       console.error("여행 계획 저장 실패:", error);
