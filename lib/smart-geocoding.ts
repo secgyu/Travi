@@ -1,8 +1,3 @@
-/**
- * 스마트 Geocoding 시스템
- * AI가 제공한 장소명(한글 + 영어)을 실제 GPS 좌표로 변환
- */
-
 interface GeocodingResult {
   lat: number;
   lng: number;
@@ -11,7 +6,6 @@ interface GeocodingResult {
   source: 'google' | 'ai' | 'fallback';
 }
 
-// 도시별 중심 좌표 (폴백용)
 const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = {
   '도쿄': { lat: 35.6762, lng: 139.6503 },
   'Tokyo': { lat: 35.6762, lng: 139.6503 },
@@ -41,28 +35,20 @@ const CITY_COORDINATES: Record<string, { lat: number; lng: number }> = {
   'Dubai': { lat: 25.2048, lng: 55.2708 },
 };
 
-// 간단한 메모리 캐시 (비용 절감)
 const geocodeCache = new Map<string, GeocodingResult>();
 
-/**
- * 스마트 Geocoding - 여러 전략을 시도하여 가장 정확한 좌표를 찾음
- */
 export async function smartGeocode(
-  title: string,           // 한글명: "시부야 스크램블 교차로"
-  subtitle: string,        // 영어명: "Shibuya Scramble Crossing"
-  destination: string      // 도시: "도쿄"
+  title: string,
+  subtitle: string,
+  destination: string
 ): Promise<GeocodingResult> {
 
-  // 캐시 확인
   const cacheKey = `${title}|${subtitle}|${destination}`;
   if (geocodeCache.has(cacheKey)) {
     console.log(`✅ [Cache Hit] ${title}`);
     return geocodeCache.get(cacheKey)!;
   }
 
-  console.log(`🔍 [Geocoding] ${title} (${subtitle}) in ${destination}`);
-
-  // 전략 1: 영어명 + 도시 검색 (가장 정확)
   if (subtitle && subtitle.trim()) {
     const result1 = await tryGoogleGeocode(`${subtitle}, ${destination}`);
     if (result1 && result1.confidence === 'high') {
@@ -72,7 +58,6 @@ export async function smartGeocode(
     }
   }
 
-  // 전략 2: 영어명만 (도시 정보는 암묵적)
   if (subtitle && subtitle.trim()) {
     const result2 = await tryGoogleGeocode(subtitle);
     if (result2 && result2.confidence === 'high') {
@@ -82,7 +67,6 @@ export async function smartGeocode(
     }
   }
 
-  // 전략 3: 한글명 + 도시 검색
   const result3 = await tryGoogleGeocode(`${title}, ${destination}`);
   if (result3 && result3.confidence !== 'low') {
     console.log(`✅ [Strategy 3] Medium confidence: ${title}, ${destination}`);
@@ -90,7 +74,6 @@ export async function smartGeocode(
     return result3;
   }
 
-  // 전략 4: AI에게 좌표 물어보기 (마지막 수단)
   if (process.env.OPENAI_API_KEY) {
     const aiResult = await askAIForCoordinates(title, subtitle, destination);
     if (aiResult) {
@@ -100,16 +83,12 @@ export async function smartGeocode(
     }
   }
 
-  // 전략 5: 도시 중심 좌표 반환
   console.log(`⚠️ [Strategy 5] City center fallback: ${destination}`);
   const fallback = getCityCenterCoordinates(destination);
   geocodeCache.set(cacheKey, fallback);
   return fallback;
 }
 
-/**
- * Google Geocoding API로 좌표 조회
- */
 async function tryGoogleGeocode(query: string): Promise<GeocodingResult | null> {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
@@ -129,10 +108,8 @@ async function tryGoogleGeocode(query: string): Promise<GeocodingResult | null> 
     if (data.status === 'OK' && data.results && data.results.length > 0) {
       const result = data.results[0];
 
-      // 결과 신뢰도 판단
       let confidence: 'high' | 'medium' | 'low' = 'low';
 
-      // 1. 정확한 장소 (point of interest, establishment) → high
       if (result.types.includes('point_of_interest') ||
         result.types.includes('establishment') ||
         result.types.includes('tourist_attraction') ||
@@ -140,13 +117,13 @@ async function tryGoogleGeocode(query: string): Promise<GeocodingResult | null> 
         result.types.includes('store')) {
         confidence = 'high';
       }
-      // 2. 거리/구역 수준 → medium
+
       else if (result.types.includes('route') ||
         result.types.includes('sublocality') ||
         result.types.includes('neighborhood')) {
         confidence = 'medium';
       }
-      // 3. 도시/국가 수준 → low
+
       else {
         confidence = 'low';
       }
@@ -173,9 +150,6 @@ async function tryGoogleGeocode(query: string): Promise<GeocodingResult | null> 
   }
 }
 
-/**
- * AI에게 좌표 물어보기 (Google API 실패 시 백업)
- */
 async function askAIForCoordinates(
   title: string,
   subtitle: string,
@@ -218,7 +192,6 @@ async function askAIForCoordinates(
     const content = data.choices[0]?.message?.content;
 
     if (content) {
-      // JSON 파싱 시도
       const coords = JSON.parse(content.trim());
 
       if (coords.lat && coords.lng &&
@@ -241,9 +214,6 @@ async function askAIForCoordinates(
   }
 }
 
-/**
- * 도시 중심 좌표 반환 (최종 폴백)
- */
 function getCityCenterCoordinates(destination: string): GeocodingResult {
   const coords = CITY_COORDINATES[destination] ||
     CITY_COORDINATES[destination.toLowerCase()] ||
@@ -257,35 +227,26 @@ function getCityCenterCoordinates(destination: string): GeocodingResult {
   };
 }
 
-/**
- * 여러 장소를 배치로 geocode
- */
+
 export async function batchGeocode(
   places: Array<{ title: string; subtitle: string }>,
   destination: string
 ): Promise<Array<GeocodingResult>> {
   console.log(`🔄 Batch geocoding ${places.length} places in ${destination}`);
 
-  // 순차 처리 (API rate limit 방지)
   const results: GeocodingResult[] = [];
 
   for (const place of places) {
     const result = await smartGeocode(place.title, place.subtitle, destination);
     results.push(result);
 
-    // API rate limit 방지를 위한 짧은 딜레이
     await new Promise(resolve => setTimeout(resolve, 100));
   }
 
   return results;
 }
 
-/**
- * 캐시 정리
- */
 export function clearGeocodeCache() {
   geocodeCache.clear();
   console.log('🗑️ Geocode cache cleared');
 }
-
-

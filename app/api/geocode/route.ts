@@ -3,10 +3,6 @@ import { smartGeocode, batchGeocode } from '@/lib/smart-geocoding';
 
 export const maxDuration = 30;
 
-/**
- * 단일 장소 Geocoding
- * POST /api/geocode
- */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -14,9 +10,9 @@ export async function POST(req: Request) {
 
     if (!title || !destination) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'title과 destination은 필수입니다' 
+        {
+          success: false,
+          error: 'title과 destination은 필수입니다'
         },
         { status: 400 }
       );
@@ -28,7 +24,6 @@ export async function POST(req: Request) {
       destination
     );
 
-    // 신뢰도에 따른 메시지
     let message = '';
     switch (result.confidence) {
       case 'high':
@@ -50,19 +45,15 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Geocoding API error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Geocoding 실패' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Geocoding 실패'
       },
       { status: 500 }
     );
   }
 }
 
-/**
- * 배치 Geocoding
- * POST /api/geocode/batch
- */
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
@@ -70,9 +61,9 @@ export async function PUT(req: Request) {
 
     if (!places || !Array.isArray(places) || !destination) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'places(배열)와 destination은 필수입니다' 
+        {
+          success: false,
+          error: 'places(배열)와 destination은 필수입니다'
         },
         { status: 400 }
       );
@@ -80,7 +71,6 @@ export async function PUT(req: Request) {
 
     const results = await batchGeocode(places, destination);
 
-    // 통계 정보
     const stats = {
       total: results.length,
       high: results.filter(r => r.confidence === 'high').length,
@@ -97,13 +87,11 @@ export async function PUT(req: Request) {
   } catch (error) {
     console.error('Batch geocoding API error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Batch geocoding 실패' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Batch geocoding 실패'
       },
       { status: 500 }
     );
   }
 }
-
-
