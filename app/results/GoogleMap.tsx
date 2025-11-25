@@ -20,12 +20,44 @@ type Marker = {
   lat: number;
   lng: number;
   title: string;
+  index?: number;
 };
 
 interface GoogleMapProps {
   center: { lat: number; lng: number };
   level: number;
   markers?: Marker[];
+  selectedIndex?: number;
+}
+
+function createMarkerContent(index: number, isSelected: boolean): HTMLDivElement {
+  const mintColor = "#4db6ac";
+  const mintColorDark = "#26a69a";
+
+  const div = document.createElement("div");
+  div.style.cssText = `
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: ${isSelected ? "42px" : "34px"};
+    height: ${isSelected ? "42px" : "34px"};
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: ${isSelected ? "16px" : "14px"};
+    box-shadow: ${
+      isSelected
+        ? "0 6px 12px -2px rgba(77, 182, 172, 0.4), 0 3px 6px -2px rgba(0, 0, 0, 0.1)"
+        : "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
+    };
+    border: ${isSelected ? "3px" : "2px"} solid ${isSelected ? "white" : mintColor};
+    background-color: ${isSelected ? mintColorDark : "white"};
+    color: ${isSelected ? "white" : mintColorDark};
+    cursor: pointer;
+    transition: all 0.2s ease;
+    transform: ${isSelected ? "scale(1.1)" : "scale(1)"};
+  `;
+  div.textContent = String(index);
+  return div;
 }
 
 interface GmpMapElement extends HTMLElement {
@@ -33,9 +65,8 @@ interface GmpMapElement extends HTMLElement {
   center?: { lat: number; lng: number };
 }
 
-function GoogleMap({ center, level = 3, markers = [] }: GoogleMapProps) {
+function GoogleMap({ center, level = 3, markers = [], selectedIndex = 0 }: GoogleMapProps) {
   const container = useRef<GmpMapElement | null>(null);
-  // Google Maps API가 이미 로드되어 있으면 로딩 상태 false로 시작
   const [isLoading, setIsLoading] = useState(() => (typeof window !== "undefined" ? !window.google : true));
   const markersRef = useRef<any[]>([]);
 
@@ -59,21 +90,26 @@ function GoogleMap({ center, level = 3, markers = [] }: GoogleMapProps) {
 
       if (!innerMap) return;
 
-      const makeMarker = (markerData: Marker) => {
+      const makeMarker = (markerData: Marker, idx: number) => {
+        const isSelected = idx === selectedIndex;
+        const content = createMarkerContent(idx + 1, isSelected);
+
         const newMarker = new AdvancedMarkerElement({
           map: innerMap,
           position: { lat: markerData.lat, lng: markerData.lng },
           title: markerData.title,
+          content: content,
+          zIndex: isSelected ? 1000 : idx,
         });
         markersRef.current.push(newMarker);
         return newMarker;
       };
 
-      markers.forEach((markerData) => makeMarker(markerData));
+      markers.forEach((markerData, idx) => makeMarker(markerData, idx));
     };
 
     void updateMarkers();
-  }, [markers]);
+  }, [markers, selectedIndex]);
 
   const init = async () => {
     setIsLoading(false);
@@ -89,17 +125,22 @@ function GoogleMap({ center, level = 3, markers = [] }: GoogleMapProps) {
 
     innerMap.setOptions({ mapTypeControl: false });
 
-    const makeMarker = (markerData: Marker) => {
+    const makeMarker = (markerData: Marker, idx: number) => {
+      const isSelected = idx === selectedIndex;
+      const content = createMarkerContent(idx + 1, isSelected);
+
       const newMarker = new AdvancedMarkerElement({
         map: innerMap,
         position: { lat: markerData.lat, lng: markerData.lng },
         title: markerData.title,
+        content: content,
+        zIndex: isSelected ? 1000 : idx,
       });
       markersRef.current.push(newMarker);
       return newMarker;
     };
 
-    markers.forEach((markerData) => makeMarker(markerData));
+    markers.forEach((markerData, idx) => makeMarker(markerData, idx));
   };
 
   return (

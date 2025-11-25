@@ -626,6 +626,7 @@ export default function ResultsPage() {
                               lng: a.lng!,
                               title: a.title,
                             }))}
+                          selectedIndex={selectedActivityIndex}
                         />
                         {selectedActivity && (
                           <div className="absolute bottom-3 left-3 right-3 md:bottom-6 md:left-6 md:right-6 pointer-events-none">
