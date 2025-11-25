@@ -84,6 +84,8 @@ export default function ResultsPage() {
   const [editingActivity, setEditingActivity] = useState<number | null>(null);
   const [localItinerary, setLocalItinerary] = useState<DayItinerary[]>([]);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [selectedActivityIndex, setSelectedActivityIndex] = useState(0);
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -116,8 +118,7 @@ export default function ResultsPage() {
       } else {
         throw new Error("여행 계획 데이터가 올바르지 않습니다");
       }
-    } catch (error) {
-      console.error("여행 계획 불러오기 실패:", error);
+    } catch {
       toast({
         title: "오류",
         description: "여행 계획을 불러오는데 실패했습니다.",
@@ -128,6 +129,24 @@ export default function ResultsPage() {
   };
 
   const currentDay = localItinerary.find((d) => d.day === activeDay) || localItinerary[0];
+
+  useEffect(() => {
+    setSelectedActivityIndex(0);
+  }, [activeDay]);
+
+  const handleActivityClick = (idx: number) => {
+    if (!isEditMode) {
+      setSelectedActivityIndex(idx);
+    }
+  };
+
+  const selectedActivity = currentDay?.activities?.[selectedActivityIndex];
+  const mapCenter =
+    selectedActivity?.lat && selectedActivity?.lng
+      ? { lat: selectedActivity.lat, lng: selectedActivity.lng }
+      : currentDay?.activities?.[0]?.lat && currentDay?.activities?.[0]?.lng
+      ? { lat: currentDay.activities[0].lat, lng: currentDay.activities[0].lng }
+      : null;
 
   if (isLoading) {
     return (
@@ -264,8 +283,7 @@ export default function ResultsPage() {
         title: "저장되었습니다",
         description: "여행 계획이 성공적으로 저장되었습니다.",
       });
-    } catch (error) {
-      console.error("저장 실패:", error);
+    } catch {
       toast({
         title: "저장 실패",
         description: "여행 계획 저장에 실패했습니다.",
@@ -446,8 +464,13 @@ export default function ResultsPage() {
                     {currentDay.activities.map((activity, idx) => (
                       <Card
                         key={idx}
-                        className={`overflow-hidden border-0 shadow-md transition-all hover:shadow-xl ${
-                          isEditMode ? "border-2 border-dashed border-primary" : ""
+                        onClick={() => handleActivityClick(idx)}
+                        className={`overflow-hidden shadow-md transition-all hover:shadow-xl cursor-pointer ${
+                          isEditMode
+                            ? "border-2 border-dashed border-primary"
+                            : selectedActivityIndex === idx
+                            ? "ring-2 ring-primary border-primary bg-primary/5"
+                            : "border-0"
                         }`}
                       >
                         <div className="p-4 md:p-5">
@@ -540,7 +563,6 @@ export default function ResultsPage() {
                               <h3 className="mb-1 text-lg font-bold text-foreground md:text-xl">{activity.title}</h3>
                               <p className="mb-3 text-sm text-muted-foreground md:text-base">{activity.subtitle}</p>
 
-                              {/* GPS 좌표 표시 */}
                               {activity.lat && activity.lng && (
                                 <div className="mb-3 rounded-lg bg-accent/50 px-3 py-2">
                                   <div className="flex items-center gap-2 text-xs">
@@ -623,19 +645,11 @@ export default function ResultsPage() {
 
                 <div className="lg:col-span-3">
                   <Card className="sticky top-24 h-[400px] overflow-hidden border-0 shadow-xl lg:h-[800px]">
-                    {/* Google 지도 표시 */}
-                    {currentDay &&
-                    currentDay.activities &&
-                    currentDay.activities.length > 0 &&
-                    currentDay.activities[0].lat &&
-                    currentDay.activities[0].lng ? (
+                    {currentDay && currentDay.activities && currentDay.activities.length > 0 && mapCenter ? (
                       <div className="relative h-full w-full">
                         <GoogleMap
                           key={`map-${activeDay}-${currentDay.activities.length}`}
-                          center={{
-                            lat: currentDay.activities[0].lat,
-                            lng: currentDay.activities[0].lng,
-                          }}
+                          center={mapCenter}
                           level={15}
                           markers={currentDay.activities
                             .filter((a) => a.lat && a.lng)
@@ -645,28 +659,26 @@ export default function ResultsPage() {
                               title: a.title,
                             }))}
                         />
-                        {/* 장소 미리보기 카드 (지도 위에 오버레이) */}
-                        <div className="absolute bottom-3 left-3 right-3 space-y-3 md:bottom-6 md:left-6 md:right-6 pointer-events-none">
-                          {currentDay.activities.slice(0, 2).map((activity, idx) => (
+                        {selectedActivity && (
+                          <div className="absolute bottom-3 left-3 right-3 md:bottom-6 md:left-6 md:right-6 pointer-events-none">
                             <div
-                              key={idx}
-                              className="glass-effect animate-in fade-in slide-in-from-bottom-4 rounded-xl border border-white p-3 shadow-lg md:p-4 pointer-events-auto"
-                              style={{ animationDelay: `${idx * 100}ms` }}
+                              key={selectedActivityIndex}
+                              className="glass-effect animate-in fade-in slide-in-from-bottom-4 rounded-xl border border-primary/50 p-3 shadow-lg md:p-4 pointer-events-auto"
                             >
                               <div className="flex items-start gap-3">
                                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                                  {idx + 1}
+                                  {selectedActivityIndex + 1}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="truncate font-semibold text-foreground">{activity.title}</p>
-                                  <p className="truncate text-sm text-muted-foreground">{activity.time}</p>
+                                  <p className="truncate font-semibold text-foreground">{selectedActivity.title}</p>
+                                  <p className="truncate text-sm text-muted-foreground">{selectedActivity.subtitle}</p>
+                                  <p className="truncate text-xs text-primary mt-1">{selectedActivity.time}</p>
                                 </div>
-                                {activity.photo && <Camera className="h-5 w-5 shrink-0 text-cta-foreground" />}
+                                {selectedActivity.photo && <Camera className="h-5 w-5 shrink-0 text-cta-foreground" />}
                               </div>
                             </div>
-                          ))}
-                        </div>
-                        {/* 이동거리 표시 */}
+                          </div>
+                        )}
                         <div className="glass-effect absolute right-3 top-3 rounded-xl border border-white px-4 py-2 shadow-lg md:right-6 md:top-6">
                           <p className="text-sm font-medium text-foreground">총 이동거리: 12.5km</p>
                         </div>
