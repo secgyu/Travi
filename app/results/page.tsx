@@ -631,11 +631,19 @@ export default function ResultsPage() {
                     currentDay.activities[0].lng ? (
                       <div className="relative h-full w-full">
                         <GoogleMap
+                          key={`map-${activeDay}-${currentDay.activities.length}`}
                           center={{
                             lat: currentDay.activities[0].lat,
                             lng: currentDay.activities[0].lng,
                           }}
                           level={15}
+                          markers={currentDay.activities
+                            .filter((a) => a.lat && a.lng)
+                            .map((a) => ({
+                              lat: a.lat!,
+                              lng: a.lng!,
+                              title: a.title,
+                            }))}
                         />
                         {/* 장소 미리보기 카드 (지도 위에 오버레이) */}
                         <div className="absolute bottom-3 left-3 right-3 space-y-3 md:bottom-6 md:left-6 md:right-6 pointer-events-none">
