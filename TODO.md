@@ -265,44 +265,21 @@ RESEND_API_KEY=
 
 ### Phase 1: 핵심 기능 (1-2주)
 
-로그인/회원가입 (Auth.js로 바꾸면서 꼬인부분해결)
-내용을 이해하고 전체과정에 문제가없는지볼것
-
-- OAuth 로그인회원가입 잘 되는지
-- 로그인후 마이페이지 갔을때 마이페이지 잘뜨는지
-  원인
-
-1. oauth 사용자가 public.users 테이블에 저장안된다.
-   이유는 user.id는 숫자문자열인데 supabase의 users테이블의 id컬럼은 uuid타입이다.
-   그래서 uuid 형식 불일치 -> postgresql 에러난다.
-
-2. nextauth로 로그인은 했지만, supabase auth 세션을 체크하고있다
-   nextauth 세션 != supabase auth 세션
-   nextauth로 로그인해도 supabase.auth.getUser()는 항상 null반환환
-
 - 지도 api연동
 - 날씨 api연동
 
-1. ✅ Supabase 인증 (완료)
-2. ✅ AI 챗봇 API 연동
-3. DB 스키마 생성
 4. 여행 계획 저장/불러오기
 
 ### Phase 2: 주요 기능 (2-3주)
 
 5. ✅ 마이페이지 데이터 연동 (프로필만 수파베이스 연동)
-6. ✅ 지도 API 연동 (발급 + env에 추가만)
-7. 날씨 API 연동
-8. ✅ OAuth 완성 + auth.js 로그인/회원가입
+6. 날씨 API 연동
 
 ### Phase 3: 부가 기능 (1-2주)
 
 9. PDF 다운로드
 10. 공유 기능
 11. 이미지 업로드
-12. ✅ 예산 계산기 저장 (환율 api만 가져옴)
-13. ✅ 여행 가이드 mdx로 변경
-14. ✅ 여행지 둘러보기 (테마별 고민단계)
 
 ### Phase 4: 마무리 (1주)
 

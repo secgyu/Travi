@@ -34,6 +34,7 @@ import {
   Smartphone,
   Banknote,
   Loader2,
+  ShieldCheck,
 } from "lucide-react";
 import GoogleMap from "./GoogleMap";
 
@@ -410,7 +411,7 @@ export default function ResultsPage() {
                     </div>
                   </Card>
 
-                  <Card className="glass-effect flex flex-1 items-center gap-3 border-0 px-4 py-3 shadow-md lg:flex-none lg:px-6">
+                  <Card className="glass-effect flex flex-1 items-center gap-3 border-0 px-4 py-3 shadow-md lg:flex-none lg:px-6 mb-4">
                     <DollarSign className="h-6 w-6 text-primary" />
                     <div>
                       <p className="text-xs text-muted-foreground md:text-sm">예상 경비</p>
@@ -675,11 +676,11 @@ export default function ResultsPage() {
                 <div className="grid gap-4 md:grid-cols-3">
                   <Card className="border-0 p-6 shadow-md">
                     <div className="mb-3">
-                      <Train className="h-8 w-8 text-secondary" />
+                      <ShieldCheck className="h-8 w-8 text-secondary" />
                     </div>
-                    <h3 className="mb-2 font-semibold text-foreground">교통패스</h3>
+                    <h3 className="mb-2 font-semibold text-foreground">여행자 보험</h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
-                      도쿄 메트로 72시간 패스를 구매하면 1,500엔으로 무제한 이용 가능합니다.
+                      해외 의료비는 매우 비싸니 출국 전 여행자 보험에 꼭 가입하세요.
                     </p>
                   </Card>
 
@@ -699,7 +700,7 @@ export default function ResultsPage() {
                     </div>
                     <h3 className="mb-2 font-semibold text-foreground">환전</h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
-                      현금 위주 사용이 많으니 출국 전 충분한 엔화를 준비하세요.
+                      현금 위주 사용이 많으니 출국 전 충분한 화폐를 준비하세요.
                     </p>
                   </Card>
                 </div>
