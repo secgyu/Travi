@@ -6,7 +6,7 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { Send, MapPin, Sparkles, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/header";
 import { Logo } from "@/components/logo";
 import { GiJapan, GiCastle, GiPagoda } from "react-icons/gi";
@@ -14,12 +14,39 @@ import { MdWavingHand } from "react-icons/md";
 import { FaLandmark } from "react-icons/fa";
 import { useToast } from "@/hooks/use-toast";
 
+interface Activity {
+  time: string;
+  title: string;
+  subtitle: string;
+  type: string;
+  transport: string;
+  duration: string;
+  price: string;
+  photo: boolean;
+  lat?: number;
+  lng?: number;
+  address?: string;
+  gps_confidence?: string;
+}
+
+interface DayItinerary {
+  day: number;
+  title: string;
+  date: string;
+  activities: Activity[];
+}
+
+interface TextPart {
+  type: "text";
+  text: string;
+}
+
 function extractTravelPlanInfo(messages: UIMessage[]) {
   const conversationText = messages
     .map((m) =>
       m.parts
-        .filter((p: any) => p.type === "text")
-        .map((p: any) => p.text)
+        .filter((p): p is TextPart => p.type === "text" && "text" in p)
+        .map((p) => p.text)
         .join("")
     )
     .join("\n");
@@ -28,12 +55,11 @@ function extractTravelPlanInfo(messages: UIMessage[]) {
     /(도쿄|오사카|파리|방콕|뉴욕|런던|바르셀로나|로마|싱가포르|홍콩|타이베이|다낭)[^가-힣]*(여행|가|방문)/
   );
   const destination = destinationMatch ? destinationMatch[1] : "여행지";
-
   const durationMatch = conversationText.match(/(\d+)일/);
   const duration = durationMatch ? parseInt(durationMatch[1]) : 3;
-
   const budgetMatch = conversationText.match(/(\d+)만원|(\d{6,})원/);
   let budget = 1000000;
+
   if (budgetMatch) {
     budget = budgetMatch[1] ? parseInt(budgetMatch[1]) * 10000 : parseInt(budgetMatch[2]);
   }
@@ -53,13 +79,13 @@ function extractTravelPlanInfo(messages: UIMessage[]) {
   };
 }
 
-function parseItinerary(messageText: string, duration: number) {
-  const itinerary: any[] = [];
+function parseItinerary(messageText: string, duration: number): DayItinerary[] {
+  const itinerary: DayItinerary[] = [];
 
   const lines = messageText.split("\n");
   let currentDay: number | null = null;
-  let currentActivities: any[] = [];
-  let currentActivity: any = null;
+  let currentActivities: Activity[] = [];
+  let currentActivity: Activity | null = null;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -194,18 +220,17 @@ function parseItinerary(messageText: string, duration: number) {
       });
     }
   }
-
   return itinerary;
 }
 
-function parseAllMessages(messages: any[], duration: number) {
-  const allItineraries = new Map<number, any>();
+function parseAllMessages(messages: UIMessage[], duration: number): DayItinerary[] {
+  const allItineraries = new Map<number, DayItinerary>();
 
   for (const message of messages) {
     if (message.role === "assistant") {
       const messageText = message.parts
-        .filter((p: any) => p.type === "text")
-        .map((p: any) => p.text)
+        .filter((p): p is TextPart => p.type === "text" && "text" in p)
+        .map((p) => p.text)
         .join("");
 
       const parsed = parseItinerary(messageText, duration);
@@ -219,7 +244,6 @@ function parseAllMessages(messages: any[], duration: number) {
   const result = Array.from(allItineraries.values()).sort((a, b) => a.day - b.day);
 
   if (result.length === 0) {
-    console.warn("⚠️ 모든 메시지에서 일정 파싱 실패, 기본 일정 생성");
     for (let i = 1; i <= duration; i++) {
       result.push({
         day: i,
@@ -331,7 +355,7 @@ export default function ChatPage() {
         itinerary.map(async (day) => ({
           ...day,
           activities: await Promise.all(
-            day.activities.map(async (activity) => {
+            day.activities.map(async (activity: Activity) => {
               try {
                 const response = await fetch("/api/geocode", {
                   method: "POST",
@@ -356,17 +380,14 @@ export default function ChatPage() {
                   }
                 }
 
-                console.warn(`⚠️ ${activity.title}: GPS 조회 실패`);
                 return activity;
-              } catch (error) {
-                console.error(`❌ ${activity.title}: GPS 조회 오류`, error);
+              } catch {
                 return activity;
               }
             })
           ),
         }))
       );
-      console.log("=== GPS 좌표 조회 완료 ===");
 
       const today = new Date();
       const startDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -386,9 +407,6 @@ export default function ChatPage() {
         is_public: true,
       };
 
-      console.log("=== 전송할 데이터 (GPS 포함) ===");
-      console.log(JSON.stringify(travelPlanData, null, 2));
-
       const response = await fetch("/api/travel-plans", {
         method: "POST",
         headers: {
@@ -399,13 +417,10 @@ export default function ChatPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("API 오류:", errorData);
         throw new Error(errorData.error || "저장 실패");
       }
 
       const result = await response.json();
-      console.log("=== 저장 성공 ===");
-      console.log(result);
 
       toast({
         title: "여행 계획이 저장되었습니다!",
@@ -414,7 +429,6 @@ export default function ChatPage() {
 
       router.push(`/results?id=${result.data.id}`);
     } catch (error) {
-      console.error("여행 계획 저장 실패:", error);
       toast({
         title: "저장 실패",
         description: error instanceof Error ? error.message : "여행 계획 저장에 실패했습니다.",
@@ -538,19 +552,28 @@ export default function ChatPage() {
         </div>
         <div className="fixed bottom-0 left-0 right-0 border-t bg-card/95 backdrop-blur-sm">
           <div className="mx-auto max-w-4xl px-4 py-4">
-            <form onSubmit={handleSubmit} className="flex gap-2">
-              <Input
+            <form onSubmit={handleSubmit} className="flex gap-2 items-end">
+              <Textarea
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="메시지를 입력하세요..."
-                className="h-12 rounded-xl bg-background"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (inputValue.trim() && !isSaving) {
+                      handleSubmit(e);
+                    }
+                  }
+                }}
+                placeholder="메시지를 입력하세요... (Shift+Enter로 줄바꿈)"
+                className="min-h-12 max-h-40 rounded-xl bg-background resize-none"
                 disabled={isSaving}
+                rows={1}
               />
               <Button
                 type="submit"
                 size="icon"
                 disabled={!inputValue.trim() || isSaving}
-                className="h-12 w-12 rounded-xl bg-primary"
+                className="h-12 w-12 rounded-xl bg-primary shrink-0"
               >
                 <Send className="h-5 w-5" />
               </Button>
