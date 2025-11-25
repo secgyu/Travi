@@ -563,38 +563,6 @@ export default function ResultsPage() {
                               <h3 className="mb-1 text-lg font-bold text-foreground md:text-xl">{activity.title}</h3>
                               <p className="mb-3 text-sm text-muted-foreground md:text-base">{activity.subtitle}</p>
 
-                              {activity.lat && activity.lng && (
-                                <div className="mb-3 rounded-lg bg-accent/50 px-3 py-2">
-                                  <div className="flex items-center gap-2 text-xs">
-                                    <MapPin className="h-3 w-3 text-primary" />
-                                    <span className="font-mono text-muted-foreground">
-                                      {activity.lat.toFixed(6)}, {activity.lng.toFixed(6)}
-                                    </span>
-                                    {activity.gps_confidence && (
-                                      <Badge
-                                        variant="outline"
-                                        className={`text-[10px] ${
-                                          activity.gps_confidence === "high"
-                                            ? "border-green-600 text-green-600"
-                                            : activity.gps_confidence === "medium"
-                                            ? "border-yellow-600 text-yellow-600"
-                                            : "border-orange-600 text-orange-600"
-                                        }`}
-                                      >
-                                        {activity.gps_confidence === "high"
-                                          ? "정확"
-                                          : activity.gps_confidence === "medium"
-                                          ? "근사"
-                                          : "추정"}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  {activity.address && (
-                                    <p className="mt-1 text-xs text-muted-foreground">{activity.address}</p>
-                                  )}
-                                </div>
-                              )}
-
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2 text-sm text-foreground">
                                   <Train className="h-4 w-4 text-secondary" />

@@ -35,7 +35,8 @@ interface GmpMapElement extends HTMLElement {
 
 function GoogleMap({ center, level = 3, markers = [] }: GoogleMapProps) {
   const container = useRef<GmpMapElement | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Google Maps API가 이미 로드되어 있으면 로딩 상태 false로 시작
+  const [isLoading, setIsLoading] = useState(() => (typeof window !== "undefined" ? !window.google : true));
   const markersRef = useRef<any[]>([]);
 
   useEffect(() => {
@@ -102,14 +103,14 @@ function GoogleMap({ center, level = 3, markers = [] }: GoogleMapProps) {
   };
 
   return (
-    <div className="w-full">
+    <div className="relative w-full h-full">
+      {/* @ts-expect-error - gmp-map is a Google Maps web component */}
+      <gmp-map ref={container} zoom={level} map-id="DEMO_MAP_ID" style={{ height: "100%" }}></gmp-map>
       {isLoading && (
-        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100/80 z-10">
           <p className="text-gray-500">지도를 불러오는 중...</p>
         </div>
       )}
-      {/* @ts-expect-error - gmp-map is a Google Maps web component */}
-      <gmp-map ref={container} zoom={level} map-id="DEMO_MAP_ID" style={{ height: "400px" }}></gmp-map>
       <Script
         src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=maps`}
         async
