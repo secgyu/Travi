@@ -167,7 +167,6 @@ export default async function MyPage() {
               <div className="grid gap-6 md:grid-cols-2">
                 {trips.map((trip) => (
                   <Card key={trip.id} className="overflow-hidden transition-all hover:shadow-lg">
-                    <div className="h-48 bg-cover bg-center" style={{ backgroundImage: `url(${trip.image})` }} />
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div>
