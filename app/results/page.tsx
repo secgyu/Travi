@@ -1,115 +1,47 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
+import { useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { ShareModal } from "@/components/share-modal";
-import { useToast } from "@/hooks/use-toast";
-import {
-  MapPin,
-  Clock,
-  Train,
-  Utensils,
-  Camera,
-  Navigation,
-  ArrowLeft,
-  Download,
-  Edit,
-  Calendar,
-  Save,
-  X,
-  Trash2,
-  Plus,
-  GripVertical,
-  DollarSign,
-  Loader2,
-} from "lucide-react";
+import { MapPin, ArrowLeft, Download, Edit, Calendar, Save, X, Plus, DollarSign, Loader2, Camera } from "lucide-react";
 import GoogleMap from "../../components/results/GoogleMap";
 import { usePdfDownload } from "@/hooks/use-pdf-download";
+import { useTravelPlan } from "@/hooks/use-travel-plan";
 import { WeatherCard } from "@/components/results/weather-card";
 import { TravelTips } from "@/components/results/travel-tips";
-
-interface Activity {
-  time: string;
-  title: string;
-  subtitle: string;
-  type: string;
-  transport: string;
-  duration: string;
-  price: string;
-  photo: boolean;
-  category?: string;
-  lat?: number;
-  lng?: number;
-  address?: string;
-  gps_confidence?: "high" | "medium" | "low";
-}
-
-interface DayItinerary {
-  day: number;
-  title: string;
-  date: string;
-  activities: Activity[];
-}
-
-interface TravelPlan {
-  id: string;
-  title: string;
-  destination: string;
-  start_date: string;
-  end_date: string;
-  budget: number;
-  currency: string;
-  itinerary: DayItinerary[];
-  travel_style?: string[];
-  status: string;
-}
-
-interface WeatherData {
-  location: string;
-  country: string;
-  current: {
-    temp: number;
-    condition: string;
-    icon: string;
-    humidity: number;
-    feelslike: number;
-    wind: number;
-  };
-  forecast?: Array<{
-    date: string;
-    maxTemp: number;
-    minTemp: number;
-    condition: string;
-    icon: string;
-  }>;
-}
+import { ActivityCard } from "@/components/results/activity-card";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ResultsPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const planId = searchParams.get("id");
-  const { user, loading: authLoading } = useAuth();
 
-  const [travelPlan, setTravelPlan] = useState<TravelPlan | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    travelPlan,
+    isLoading,
+    localItinerary,
+    weather,
+    isWeatherLoading,
+    isSaving,
+    handleDeleteActivity,
+    handleAddActivity,
+    handleMoveActivity,
+    handleUpdateActivity,
+    handleSave,
+    handleSaveToMyTrips,
+    resetItinerary,
+  } = useTravelPlan({ planId });
+
   const [activeDay, setActiveDay] = useState(1);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingActivity, setEditingActivity] = useState<number | null>(null);
-  const [localItinerary, setLocalItinerary] = useState<DayItinerary[]>([]);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [selectedActivityIndex, setSelectedActivityIndex] = useState(0);
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [isWeatherLoading, setIsWeatherLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
   const { toast } = useToast();
 
@@ -143,80 +75,12 @@ export default function ResultsPage() {
     },
   });
 
-  useEffect(() => {
-    if (planId) {
-      fetchTravelPlan(planId);
-    } else {
-      setIsLoading(false);
-      toast({
-        title: "오류",
-        description: "여행 계획 ID가 필요합니다.",
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [planId]);
-
-  useEffect(() => {
-    if (travelPlan?.destination && travelPlan.destination !== "여행지") {
-      // destination에서 도시명만 추출 (쉼표가 있으면 앞부분만, 예: "도쿄, 일본" → "도쿄")
-      const cityName = travelPlan.destination.split(",")[0].trim();
-      if (cityName && cityName !== "여행지") {
-        fetchWeather(cityName);
-      }
-    }
-  }, [travelPlan?.destination]);
-
-  const fetchWeather = async (destination: string) => {
-    try {
-      setIsWeatherLoading(true);
-      const response = await fetch(`/api/weather?city=${encodeURIComponent(destination)}&days=3`);
-
-      if (!response.ok) {
-        throw new Error("날씨 정보를 가져올 수 없습니다");
-      }
-
-      const result = await response.json();
-
-      if (result.success && result.data) {
-        setWeather(result.data);
-      }
-    } finally {
-      setIsWeatherLoading(false);
-    }
-  };
-
-  const fetchTravelPlan = async (id: string) => {
-    try {
-      setIsLoading(true);
-      const response = await fetch(`/api/travel-plans/${id}`);
-
-      if (!response.ok) {
-        throw new Error("여행 계획을 불러올 수 없습니다");
-      }
-
-      const result = await response.json();
-
-      if (result.success && result.data) {
-        setTravelPlan(result.data);
-        setLocalItinerary(result.data.itinerary || []);
-      } else {
-        throw new Error("여행 계획 데이터가 올바르지 않습니다");
-      }
-    } catch {
-      toast({
-        title: "오류",
-        description: "여행 계획을 불러오는데 실패했습니다.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const currentDay = localItinerary.find((d) => d.day === activeDay) || localItinerary[0];
 
-  useEffect(() => {
+  const handleDayChange = (day: number) => {
+    setActiveDay(day);
     setSelectedActivityIndex(0);
-  }, [activeDay]);
+  };
 
   const handleActivityClick = (idx: number) => {
     if (!isEditMode) {
@@ -269,186 +133,9 @@ export default function ResultsPage() {
     );
   }
 
-  const handleDeleteActivity = (dayNum: number, activityIdx: number) => {
-    setLocalItinerary(
-      localItinerary.map((day) => {
-        if (day.day === dayNum) {
-          return {
-            ...day,
-            activities: day.activities.filter((_, idx) => idx !== activityIdx),
-          };
-        }
-        return day;
-      })
-    );
-    toast({
-      title: "장소가 삭제되었습니다",
-      description: "일정에서 선택한 장소를 삭제했습니다.",
-    });
-  };
-
-  const handleAddActivity = (dayNum: number) => {
-    const newActivity: Activity = {
-      time: "시간 선택",
-      title: "새 장소",
-      subtitle: "",
-      type: "관광",
-      transport: "이동 방법 입력",
-      duration: "소요시간",
-      price: "무료",
-      photo: false,
-    };
-
-    setLocalItinerary(
-      localItinerary.map((day) => {
-        if (day.day === dayNum) {
-          return {
-            ...day,
-            activities: [...day.activities, newActivity],
-          };
-        }
-        return day;
-      })
-    );
-    toast({
-      title: "새 장소가 추가되었습니다",
-      description: "상세 정보를 입력하고 저장해주세요.",
-    });
-  };
-
-  const handleMoveActivity = (dayNum: number, fromIdx: number, direction: "up" | "down") => {
-    const toIdx = direction === "up" ? fromIdx - 1 : fromIdx + 1;
-
-    setLocalItinerary(
-      localItinerary.map((day) => {
-        if (day.day === dayNum) {
-          const newActivities = [...day.activities];
-          const temp = newActivities[fromIdx];
-          newActivities[fromIdx] = newActivities[toIdx];
-          newActivities[toIdx] = temp;
-          return {
-            ...day,
-            activities: newActivities,
-          };
-        }
-        return day;
-      })
-    );
-  };
-
-  const handleUpdateActivity = (
-    dayNum: number,
-    activityIdx: number,
-    field: keyof Activity,
-    value: string | boolean
-  ) => {
-    setLocalItinerary(
-      localItinerary.map((day) => {
-        if (day.day === dayNum) {
-          return {
-            ...day,
-            activities: day.activities.map((activity, idx) => {
-              if (idx === activityIdx) {
-                return { ...activity, [field]: value };
-              }
-              return activity;
-            }),
-          };
-        }
-        return day;
-      })
-    );
-  };
-
-  const handleSave = async () => {
-    if (!travelPlan?.id) return;
-
-    if (authLoading) return;
-    if (!user) {
-      toast({
-        title: "로그인이 필요합니다",
-        description: "여행 계획을 저장하려면 로그인해주세요.",
-      });
-      router.push(`/login?callbackUrl=/results?id=${planId}`);
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/travel-plans/${travelPlan.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...travelPlan,
-          itinerary: localItinerary,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("저장에 실패했습니다");
-      }
-
-      setIsEditMode(false);
-      setEditingActivity(null);
-      toast({
-        title: "저장되었습니다",
-        description: "여행 계획이 성공적으로 저장되었습니다.",
-      });
-    } catch {
-      toast({
-        title: "저장 실패",
-        description: "여행 계획 저장에 실패했습니다.",
-      });
-    }
-  };
-
-  const handleSaveToMyTrips = async () => {
-    // 로그인 확인
-    if (authLoading) return;
-
-    if (!user) {
-      toast({
-        title: "로그인이 필요합니다",
-        description: "여행 계획을 저장하려면 로그인해주세요.",
-      });
-      router.push(`/login?callbackUrl=/results?id=${planId}`);
-      return;
-    }
-
-    if (!travelPlan?.id) return;
-
-    try {
-      setIsSaving(true);
-
-      // 현재 계획을 사용자 계획으로 저장 (user_id 업데이트)
-      const response = await fetch(`/api/travel-plans/${travelPlan.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...travelPlan,
-          itinerary: localItinerary,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("저장에 실패했습니다");
-      }
-
-      toast({
-        title: "내 여행에 저장되었습니다",
-        description: "마이페이지에서 확인하실 수 있습니다.",
-      });
-    } catch {
-      toast({
-        title: "저장 실패",
-        description: "여행 계획 저장에 실패했습니다. 다시 시도해주세요.",
-      });
-    } finally {
-      setIsSaving(false);
-    }
+  const onSaveComplete = () => {
+    setIsEditMode(false);
+    setEditingActivity(null);
   };
 
   return (
@@ -509,7 +196,12 @@ export default function ResultsPage() {
                   </>
                 ) : (
                   <>
-                    <Button variant="default" size="sm" className="gap-2 rounded-xl bg-primary" onClick={handleSave}>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="gap-2 rounded-xl bg-primary"
+                      onClick={() => handleSave({ onSuccess: onSaveComplete })}
+                    >
                       <Save className="h-4 w-4" />
                       <span className="hidden md:inline">저장하기</span>
                     </Button>
@@ -520,9 +212,7 @@ export default function ResultsPage() {
                       onClick={() => {
                         setIsEditMode(false);
                         setEditingActivity(null);
-                        if (travelPlan) {
-                          setLocalItinerary(travelPlan.itinerary);
-                        }
+                        resetItinerary();
                       }}
                     >
                       <X className="h-4 w-4" />
@@ -597,7 +287,7 @@ export default function ResultsPage() {
                     {localItinerary.map((day) => (
                       <Button
                         key={day.day}
-                        onClick={() => setActiveDay(day.day)}
+                        onClick={() => handleDayChange(day.day)}
                         variant={activeDay === day.day ? "default" : "outline"}
                         className={`flex-none rounded-xl transition-all ${
                           activeDay === day.day
@@ -616,165 +306,22 @@ export default function ResultsPage() {
                     </div>
 
                     {currentDay.activities.map((activity, idx) => (
-                      <Card
+                      <ActivityCard
                         key={idx}
-                        onClick={() => handleActivityClick(idx)}
-                        className={`overflow-hidden shadow-md transition-all hover:shadow-xl cursor-pointer ${
-                          isEditMode
-                            ? "border-2 border-dashed border-primary"
-                            : selectedActivityIndex === idx
-                            ? "ring-2 ring-primary border-primary bg-primary/5"
-                            : "border-0"
-                        }`}
-                      >
-                        <div className="p-4 md:p-5">
-                          {isEditMode && (
-                            <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  disabled={idx === 0}
-                                  onClick={() => handleMoveActivity(activeDay, idx, "up")}
-                                >
-                                  ↑
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  disabled={idx === currentDay.activities.length - 1}
-                                  onClick={() => handleMoveActivity(activeDay, idx, "down")}
-                                >
-                                  ↓
-                                </Button>
-                                <GripVertical className="h-4 w-4 text-muted-foreground" />
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="gap-2 text-primary"
-                                  onClick={() => setEditingActivity(editingActivity === idx ? null : idx)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                  {editingActivity === idx ? "완료" : "수정"}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="gap-2 text-destructive"
-                                  onClick={() => handleDeleteActivity(activeDay, idx)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  삭제
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-
-                          {isEditMode && editingActivity === idx ? (
-                            <div className="space-y-4">
-                              <div>
-                                <Label>시간</Label>
-                                <Input
-                                  value={activity.time}
-                                  onChange={(e) => handleUpdateActivity(activeDay, idx, "time", e.target.value)}
-                                  className="mt-1"
-                                />
-                              </div>
-                              <div>
-                                <Label>장소명</Label>
-                                <Input
-                                  value={activity.title}
-                                  onChange={(e) => handleUpdateActivity(activeDay, idx, "title", e.target.value)}
-                                  className="mt-1"
-                                />
-                              </div>
-                              <div>
-                                <Label>현지명</Label>
-                                <Input
-                                  value={activity.subtitle}
-                                  onChange={(e) => handleUpdateActivity(activeDay, idx, "subtitle", e.target.value)}
-                                  className="mt-1"
-                                />
-                              </div>
-                              <div>
-                                <Label>이동 방법</Label>
-                                <Input
-                                  value={activity.transport}
-                                  onChange={(e) => handleUpdateActivity(activeDay, idx, "transport", e.target.value)}
-                                  className="mt-1"
-                                />
-                              </div>
-                              <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                  <Label>소요 시간</Label>
-                                  <Input
-                                    value={activity.duration}
-                                    onChange={(e) => handleUpdateActivity(activeDay, idx, "duration", e.target.value)}
-                                    className="mt-1"
-                                  />
-                                </div>
-                                <div>
-                                  <Label>예상 비용</Label>
-                                  <Input
-                                    value={activity.price}
-                                    onChange={(e) => handleUpdateActivity(activeDay, idx, "price", e.target.value)}
-                                    className="mt-1"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <>
-                              <div className="mb-3 flex items-start justify-between">
-                                <div className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4 text-primary" />
-                                  <span className="font-semibold text-primary">{activity.time}</span>
-                                </div>
-                                <Badge variant="secondary" className="rounded-lg text-xs md:text-sm">
-                                  {activity.type}
-                                </Badge>
-                              </div>
-
-                              <h3 className="mb-1 text-lg font-bold text-foreground md:text-xl">{activity.title}</h3>
-                              <p className="mb-3 text-sm text-muted-foreground md:text-base">{activity.subtitle}</p>
-
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2 text-sm text-foreground">
-                                  <Train className="h-4 w-4 text-secondary" />
-                                  <span>{activity.transport}</span>
-                                </div>
-
-                                <div className="flex items-center gap-4 text-sm">
-                                  <div className="flex items-center gap-2 text-muted-foreground">
-                                    <Navigation className="h-4 w-4" />
-                                    {activity.duration}
-                                  </div>
-                                  <div className="flex items-center gap-2 font-medium text-forest">
-                                    {activity.price}
-                                  </div>
-                                </div>
-
-                                {activity.category && (
-                                  <div className="flex items-center gap-2 text-sm">
-                                    <Utensils className="h-4 w-4 text-muted-foreground" />
-                                    <span className="text-muted-foreground">{activity.category}</span>
-                                  </div>
-                                )}
-
-                                {activity.photo && (
-                                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-cta/10 px-3 py-2">
-                                    <Camera className="h-4 w-4 text-cta-foreground" />
-                                    <span className="text-sm font-medium text-cta-foreground">포토존 추천</span>
-                                  </div>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      </Card>
+                        activity={activity}
+                        idx={idx}
+                        isEditMode={isEditMode}
+                        isEditing={editingActivity === idx}
+                        isSelected={selectedActivityIndex === idx}
+                        isFirst={idx === 0}
+                        isLast={idx === currentDay.activities.length - 1}
+                        activeDay={activeDay}
+                        onActivityClick={handleActivityClick}
+                        onMoveActivity={handleMoveActivity}
+                        onDeleteActivity={handleDeleteActivity}
+                        onUpdateActivity={handleUpdateActivity}
+                        onToggleEdit={setEditingActivity}
+                      />
                     ))}
                     {isEditMode && (
                       <Button
