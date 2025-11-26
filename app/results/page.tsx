@@ -74,6 +74,26 @@ interface TravelPlan {
   status: string;
 }
 
+interface WeatherData {
+  location: string;
+  country: string;
+  current: {
+    temp: number;
+    condition: string;
+    icon: string;
+    humidity: number;
+    feelslike: number;
+    wind: number;
+  };
+  forecast?: Array<{
+    date: string;
+    maxTemp: number;
+    minTemp: number;
+    condition: string;
+    icon: string;
+  }>;
+}
+
 export default function ResultsPage() {
   const searchParams = useSearchParams();
   const planId = searchParams.get("id");
@@ -86,6 +106,8 @@ export default function ResultsPage() {
   const [localItinerary, setLocalItinerary] = useState<DayItinerary[]>([]);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [selectedActivityIndex, setSelectedActivityIndex] = useState(0);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [isWeatherLoading, setIsWeatherLoading] = useState(false);
 
   const { toast } = useToast();
 
@@ -101,6 +123,31 @@ export default function ResultsPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [planId]);
+
+  useEffect(() => {
+    if (travelPlan?.destination && travelPlan.destination !== "여행지") {
+      fetchWeather(travelPlan.destination);
+    }
+  }, [travelPlan?.destination]);
+
+  const fetchWeather = async (destination: string) => {
+    try {
+      setIsWeatherLoading(true);
+      const response = await fetch(`/api/weather?city=${encodeURIComponent(destination)}&days=3`);
+
+      if (!response.ok) {
+        throw new Error("날씨 정보를 가져올 수 없습니다");
+      }
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        setWeather(result.data);
+      }
+    } finally {
+      setIsWeatherLoading(false);
+    }
+  };
 
   const fetchTravelPlan = async (id: string) => {
     try {
@@ -404,11 +451,45 @@ export default function ResultsPage() {
 
                 <div className="flex w-full flex-row gap-3 lg:w-auto lg:flex-col">
                   <Card className="glass-effect flex flex-1 items-center gap-3 border-0 px-4 py-3 shadow-md lg:flex-none lg:px-6">
-                    <Cloud className="h-6 w-6 text-secondary" />
-                    <div>
-                      <p className="text-xs text-muted-foreground md:text-sm">날씨</p>
-                      <p className="text-sm font-semibold text-foreground md:text-base">맑음 18°C</p>
-                    </div>
+                    {isWeatherLoading ? (
+                      <>
+                        <Loader2 className="h-6 w-6 text-secondary animate-spin" />
+                        <div>
+                          <p className="text-xs text-muted-foreground md:text-sm">날씨</p>
+                          <p className="text-sm font-semibold text-foreground md:text-base">로딩중...</p>
+                        </div>
+                      </>
+                    ) : weather ? (
+                      <>
+                        {weather.current.icon ? (
+                          <img
+                            src={
+                              weather.current.icon.startsWith("//")
+                                ? `https:${weather.current.icon}`
+                                : weather.current.icon
+                            }
+                            alt={weather.current.condition}
+                            className="h-10 w-10"
+                          />
+                        ) : (
+                          <Cloud className="h-6 w-6 text-secondary" />
+                        )}
+                        <div>
+                          <p className="text-xs text-muted-foreground md:text-sm">{weather.location} 날씨</p>
+                          <p className="text-sm font-semibold text-foreground md:text-base">
+                            {weather.current.condition} {weather.current.temp}°C
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <Cloud className="h-6 w-6 text-secondary" />
+                        <div>
+                          <p className="text-xs text-muted-foreground md:text-sm">날씨</p>
+                          <p className="text-sm font-semibold text-muted-foreground md:text-base">정보 없음</p>
+                        </div>
+                      </>
+                    )}
                   </Card>
 
                   <Card className="glass-effect flex flex-1 items-center gap-3 border-0 px-4 py-3 shadow-md lg:flex-none lg:px-6 mb-4">

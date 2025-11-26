@@ -51,10 +51,22 @@ function extractTravelPlanInfo(messages: UIMessage[]) {
     )
     .join("\n");
 
-  const destinationMatch = conversationText.match(
-    /(도쿄|오사카|파리|방콕|뉴욕|런던|바르셀로나|로마|싱가포르|홍콩|타이베이|다낭)[^가-힣]*(여행|가|방문)/
-  );
-  const destination = destinationMatch ? destinationMatch[1] : "여행지";
+  // 도시명 자동 추출 (하드코딩 없이)
+  // 1. AI 응답에서 "## 도시명 N일 여행" 패턴 우선 검색
+  let destinationMatch = conversationText.match(/##\s*(.+?)\s+\d+일\s*(여행|일정|코스)/);
+
+  // 2. 없으면 "도시명 N일 여행/일정" 패턴 검색
+  if (!destinationMatch) {
+    destinationMatch = conversationText.match(/([가-힣A-Za-z]+)\s+\d+일\s*(여행|일정|코스)/);
+  }
+
+  // 3. 국가/대륙명은 제외 (도시가 아닌 경우)
+  const excludeWords = ["일본", "한국", "미국", "중국", "유럽", "아시아", "동남아", "북미", "남미"];
+  let destination = destinationMatch ? destinationMatch[1].trim() : "여행지";
+
+  if (excludeWords.includes(destination)) {
+    destination = "여행지"; // 국가명이면 기본값 유지 (AI가 다시 물어볼 것)
+  }
   const durationMatch = conversationText.match(/(\d+)일/);
   const duration = durationMatch ? parseInt(durationMatch[1]) : 3;
   const budgetMatch = conversationText.match(/(\d+)만원|(\d{6,})원/);
