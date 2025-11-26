@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { toEnglishCityName } from "@/lib/city-names";
 
 interface WeatherResponse {
   location: {
@@ -51,6 +52,9 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // 한글 도시명을 영문으로 변환
+  const englishCity = toEnglishCityName(city);
+
   const apiKey = process.env.NEXT_PUBLIC_WEATHER_API;
 
   if (!apiKey) {
@@ -61,7 +65,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const url = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${encodeURIComponent(city)}&days=${days}&lang=ko`;
+    const url = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${encodeURIComponent(englishCity)}&days=${days}&lang=ko`;
 
     const response = await fetch(url, {
       next: { revalidate: 1800 }

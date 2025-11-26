@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +38,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import GoogleMap from "./GoogleMap";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface Activity {
   time: string;
@@ -96,7 +99,9 @@ interface WeatherData {
 
 export default function ResultsPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const planId = searchParams.get("id");
+  const { user, loading: authLoading } = useAuth();
 
   const [travelPlan, setTravelPlan] = useState<TravelPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -108,6 +113,8 @@ export default function ResultsPage() {
   const [selectedActivityIndex, setSelectedActivityIndex] = useState(0);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [isWeatherLoading, setIsWeatherLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const { toast } = useToast();
 
@@ -126,7 +133,11 @@ export default function ResultsPage() {
 
   useEffect(() => {
     if (travelPlan?.destination && travelPlan.destination !== "여행지") {
-      fetchWeather(travelPlan.destination);
+      // destination에서 도시명만 추출 (쉼표가 있으면 앞부분만, 예: "도쿄, 일본" → "도쿄")
+      const cityName = travelPlan.destination.split(",")[0].trim();
+      if (cityName && cityName !== "여행지") {
+        fetchWeather(cityName);
+      }
     }
   }, [travelPlan?.destination]);
 
@@ -339,11 +350,209 @@ export default function ResultsPage() {
     }
   };
 
-  const handleSaveToMyTrips = () => {
-    toast({
-      title: "내 여행에 저장되었습니다",
-      description: "마이페이지에서 확인하실 수 있습니다.",
-    });
+  const handleSaveToMyTrips = async () => {
+    // 로그인 확인
+    if (authLoading) return;
+
+    if (!user) {
+      toast({
+        title: "로그인이 필요합니다",
+        description: "여행 계획을 저장하려면 로그인해주세요.",
+      });
+      router.push(`/login?callbackUrl=/results?id=${planId}`);
+      return;
+    }
+
+    if (!travelPlan?.id) return;
+
+    try {
+      setIsSaving(true);
+
+      // 현재 계획을 사용자 계획으로 저장 (user_id 업데이트)
+      const response = await fetch(`/api/travel-plans/${travelPlan.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...travelPlan,
+          itinerary: localItinerary,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("저장에 실패했습니다");
+      }
+
+      toast({
+        title: "내 여행에 저장되었습니다",
+        description: "마이페이지에서 확인하실 수 있습니다.",
+      });
+    } catch {
+      toast({
+        title: "저장 실패",
+        description: "여행 계획 저장에 실패했습니다. 다시 시도해주세요.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!travelPlan) return;
+
+    try {
+      setIsDownloading(true);
+      toast({
+        title: "PDF 생성 중...",
+        description: "잠시만 기다려주세요.",
+      });
+
+      // PDF용 임시 iframe 생성 (CSS 격리를 위해)
+      const iframe = document.createElement("iframe");
+      iframe.style.cssText = "position: absolute; left: -9999px; top: 0; width: 850px; height: 1px;";
+      document.body.appendChild(iframe);
+
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) {
+        throw new Error("iframe 생성 실패");
+      }
+
+      iframeDoc.open();
+      iframeDoc.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+              background: #ffffff;
+              color: #000000;
+              padding: 40px;
+            }
+          </style>
+        </head>
+        <body>
+      `);
+
+      const pdfContainer = iframeDoc.body;
+
+      // PDF 내용 생성
+      let html = `
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="font-size: 28px; color: #16a34a; margin-bottom: 10px;">🌍 ${travelPlan.title}</h1>
+          <p style="font-size: 14px; color: #666;">
+            📅 ${formatDate(travelPlan.start_date)} ~ ${formatDate(travelPlan.end_date)}
+          </p>
+          <p style="font-size: 14px; color: #666;">
+            📍 ${travelPlan.destination} | 💰 예산: ₩${travelPlan.budget?.toLocaleString() || 0}원
+          </p>
+        </div>
+        <hr style="border: none; border-top: 2px solid #e5e7eb; margin: 20px 0;" />
+      `;
+
+      // 각 일차별 일정 추가
+      for (const day of localItinerary) {
+        html += `
+          <div style="margin-bottom: 30px;">
+            <h2 style="font-size: 20px; color: #16a34a; margin-bottom: 15px; padding: 10px; background: #f0fdf4; border-radius: 8px;">
+              📆 ${day.title} - ${day.date}
+            </h2>
+        `;
+
+        for (const activity of day.activities) {
+          html += `
+            <div style="margin-bottom: 15px; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="font-weight: bold; color: #16a34a;">🕐 ${activity.time}</span>
+                <span style="background: #f3f4f6; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${
+                  activity.type
+                }</span>
+              </div>
+              <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 5px;">${activity.title}</h3>
+              ${
+                activity.subtitle
+                  ? `<p style="font-size: 14px; color: #666; margin-bottom: 8px;">${activity.subtitle}</p>`
+                  : ""
+              }
+              <div style="font-size: 13px; color: #666;">
+                <p>🚇 이동: ${activity.transport}</p>
+                <p>⏱️ 소요: ${activity.duration} | 💵 비용: ${activity.price}</p>
+                ${activity.photo ? '<p style="color: #f59e0b;">📸 포토존 추천</p>' : ""}
+              </div>
+            </div>
+          `;
+        }
+
+        html += `</div>`;
+      }
+
+      // 푸터
+      html += `
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
+          <p style="font-size: 12px; color: #999;">Travi - AI 여행 플래너로 생성됨</p>
+        </div>
+      `;
+
+      pdfContainer.innerHTML = html;
+      iframeDoc.write("</body></html>");
+      iframeDoc.close();
+
+      // iframe 로드 대기
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // html2canvas로 캡처
+      const canvas = await html2canvas(iframeDoc.body, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+        allowTaint: true,
+        windowWidth: 850,
+      });
+
+      // PDF 생성
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pdf = new jsPDF("p", "mm", "a4");
+
+      // 여러 페이지 처리
+      const pageHeight = 297; // A4 height in mm
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // 다운로드
+      const fileName = `${travelPlan.title.replace(/\s/g, "_")}_여행계획.pdf`;
+      pdf.save(fileName);
+
+      // 정리 - iframe 제거
+      document.body.removeChild(iframe);
+
+      toast({
+        title: "PDF 다운로드 완료!",
+        description: `${fileName} 파일이 저장되었습니다.`,
+      });
+    } catch (error) {
+      console.error("PDF 생성 오류:", error);
+      toast({
+        title: "PDF 생성 실패",
+        description: "PDF 생성 중 오류가 발생했습니다.",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -368,9 +577,10 @@ export default function ResultsPage() {
                       size="sm"
                       className="gap-2 rounded-xl bg-primary"
                       onClick={handleSaveToMyTrips}
+                      disabled={isSaving}
                     >
-                      <Save className="h-4 w-4" />
-                      <span className="hidden md:inline">저장하기</span>
+                      {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      <span className="hidden md:inline">{isSaving ? "저장중..." : "저장하기"}</span>
                     </Button>
                     <Button
                       variant="outline"
@@ -390,9 +600,15 @@ export default function ResultsPage() {
                       <Edit className="h-4 w-4" />
                       <span className="hidden md:inline">수정하기</span>
                     </Button>
-                    <Button variant="outline" size="sm" className="gap-2 rounded-xl bg-transparent">
-                      <Download className="h-4 w-4" />
-                      <span className="hidden md:inline">PDF 다운로드</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 rounded-xl bg-transparent"
+                      onClick={handleDownloadPDF}
+                      disabled={isDownloading}
+                    >
+                      {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                      <span className="hidden md:inline">{isDownloading ? "생성중..." : "PDF 다운로드"}</span>
                     </Button>
                   </>
                 ) : (
