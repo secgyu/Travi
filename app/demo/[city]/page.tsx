@@ -7,6 +7,7 @@ const demoData = {
     dates: "2025년 3월 15일 - 3월 17일",
     location: "도쿄, 일본",
     budget: "₩850,000원",
+    center: { lat: 35.6762, lng: 139.6503 },
     itinerary: [
       {
         day: 1,
@@ -22,6 +23,8 @@ const demoData = {
             duration: "도보 5분",
             price: "무료",
             photo: true,
+            lat: 35.6595,
+            lng: 139.7004,
           },
           {
             time: "오전 11:00",
@@ -32,6 +35,8 @@ const demoData = {
             duration: "2시간",
             price: "₩₩",
             photo: true,
+            lat: 35.6702,
+            lng: 139.7026,
           },
           {
             time: "오후 1:00",
@@ -42,6 +47,8 @@ const demoData = {
             duration: "1시간",
             price: "₩15,000원",
             category: "일식",
+            lat: 35.6596,
+            lng: 139.6987,
           },
           {
             time: "오후 3:00",
@@ -52,6 +59,8 @@ const demoData = {
             duration: "2시간",
             price: "무료",
             photo: true,
+            lat: 35.6763,
+            lng: 139.6993,
           },
           {
             time: "오후 6:00",
@@ -62,6 +71,8 @@ const demoData = {
             duration: "2시간",
             price: "₩35,000원",
             category: "일식",
+            lat: 35.6944,
+            lng: 139.6989,
           },
         ],
       },
@@ -79,6 +90,8 @@ const demoData = {
             duration: "3시간",
             price: "₩₩",
             photo: true,
+            lat: 35.6655,
+            lng: 139.7707,
           },
           {
             time: "오후 12:00",
@@ -89,6 +102,8 @@ const demoData = {
             duration: "2시간",
             price: "무료",
             photo: true,
+            lat: 35.7148,
+            lng: 139.7967,
           },
           {
             time: "오후 3:00",
@@ -99,6 +114,8 @@ const demoData = {
             duration: "2시간",
             price: "₩25,000원",
             photo: true,
+            lat: 35.7101,
+            lng: 139.8107,
           },
           {
             time: "오후 6:00",
@@ -109,6 +126,8 @@ const demoData = {
             duration: "2시간",
             price: "₩45,000원",
             category: "일식",
+            lat: 35.6721,
+            lng: 139.7636,
           },
         ],
       },
@@ -126,6 +145,8 @@ const demoData = {
             duration: "2시간",
             price: "무료",
             photo: true,
+            lat: 35.7148,
+            lng: 139.7745,
           },
           {
             time: "오전 11:00",
@@ -136,6 +157,8 @@ const demoData = {
             duration: "2시간",
             price: "₩₩",
             photo: false,
+            lat: 35.7082,
+            lng: 139.7741,
           },
           {
             time: "오후 1:00",
@@ -146,6 +169,8 @@ const demoData = {
             duration: "1시간",
             price: "₩18,000원",
             category: "일식",
+            lat: 35.6326,
+            lng: 139.7101,
           },
           {
             time: "오후 3:00",
@@ -156,6 +181,8 @@ const demoData = {
             duration: "3시간",
             price: "₩₩₩",
             photo: false,
+            lat: 35.6721,
+            lng: 139.7645,
           },
           {
             time: "오후 7:00",
@@ -166,6 +193,8 @@ const demoData = {
             duration: "2시간",
             price: "₩80,000원",
             category: "일식",
+            lat: 35.6721,
+            lng: 139.7636,
           },
         ],
       },
@@ -176,6 +205,7 @@ const demoData = {
     dates: "2025년 4월 10일 - 4월 11일",
     location: "오사카, 일본",
     budget: "₩550,000원",
+    center: { lat: 34.6937, lng: 135.5023 },
     itinerary: [
       {
         day: 1,
@@ -191,6 +221,8 @@ const demoData = {
             duration: "2시간",
             price: "₩6,000원",
             photo: true,
+            lat: 34.6873,
+            lng: 135.5262,
           },
           {
             time: "오후 1:00",
@@ -201,6 +233,8 @@ const demoData = {
             duration: "1시간",
             price: "₩15,000원",
             category: "일식",
+            lat: 34.6685,
+            lng: 135.503,
           },
           {
             time: "오후 3:00",
@@ -211,6 +245,8 @@ const demoData = {
             duration: "1.5시간",
             price: "₩15,000원",
             photo: true,
+            lat: 34.7055,
+            lng: 135.49,
           },
           {
             time: "오후 6:00",
@@ -221,6 +257,8 @@ const demoData = {
             duration: "2시간",
             price: "무료",
             photo: true,
+            lat: 34.6687,
+            lng: 135.5031,
           },
           {
             time: "오후 8:00",
@@ -231,6 +269,8 @@ const demoData = {
             duration: "1시간",
             price: "₩10,000원",
             category: "길거리음식",
+            lat: 34.6689,
+            lng: 135.5024,
           },
         ],
       },
@@ -248,6 +288,8 @@ const demoData = {
             duration: "종일",
             price: "₩85,000원",
             photo: true,
+            lat: 34.6654,
+            lng: 135.4324,
           },
           {
             time: "오후 7:00",
@@ -258,6 +300,8 @@ const demoData = {
             duration: "1.5시간",
             price: "₩25,000원",
             category: "일식",
+            lat: 34.6673,
+            lng: 135.5014,
           },
         ],
       },

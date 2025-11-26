@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import GoogleMap from "@/components/results/GoogleMap";
 import {
   MapPin,
   Clock,
@@ -34,6 +35,8 @@ type Activity = {
   price: string;
   photo: boolean;
   category?: string;
+  lat?: number;
+  lng?: number;
 };
 
 type Day = {
@@ -48,13 +51,38 @@ type DemoData = {
   dates: string;
   location: string;
   budget: string;
+  center: { lat: number; lng: number };
   itinerary: Day[];
 };
 
 export function DemoResultsClient({ data, city }: { data: DemoData; city: string }) {
   const [activeDay, setActiveDay] = useState(1);
+  const [selectedActivityIndex, setSelectedActivityIndex] = useState(0);
 
   const currentDay = data.itinerary.find((d) => d.day === activeDay) || data.itinerary[0];
+
+  const markers = currentDay.activities
+    .filter((a) => a.lat && a.lng)
+    .map((a, idx) => ({
+      lat: a.lat!,
+      lng: a.lng!,
+      title: a.title,
+      index: idx,
+    }));
+
+  const mapCenter =
+    markers.length > 0 && selectedActivityIndex < markers.length
+      ? { lat: markers[selectedActivityIndex].lat, lng: markers[selectedActivityIndex].lng }
+      : data.center;
+
+  const handleDayChange = (day: number) => {
+    setActiveDay(day);
+    setSelectedActivityIndex(0);
+  };
+
+  const handleActivityClick = (index: number) => {
+    setSelectedActivityIndex(index);
+  };
 
   return (
     <>
@@ -124,7 +152,7 @@ export function DemoResultsClient({ data, city }: { data: DemoData; city: string
                     {data.itinerary.map((day) => (
                       <Button
                         key={day.day}
-                        onClick={() => setActiveDay(day.day)}
+                        onClick={() => handleDayChange(day.day)}
                         variant={activeDay === day.day ? "default" : "outline"}
                         className={`flex-none rounded-xl transition-all ${
                           activeDay === day.day
@@ -143,10 +171,19 @@ export function DemoResultsClient({ data, city }: { data: DemoData; city: string
                     </div>
 
                     {currentDay.activities.map((activity, idx) => (
-                      <Card key={idx} className="overflow-hidden border-0 shadow-md transition-all hover:shadow-xl">
+                      <Card
+                        key={idx}
+                        onClick={() => handleActivityClick(idx)}
+                        className={`overflow-hidden border-0 shadow-md transition-all hover:shadow-xl cursor-pointer ${
+                          selectedActivityIndex === idx ? "ring-2 ring-primary" : ""
+                        }`}
+                      >
                         <div className="p-4 md:p-5">
                           <div className="mb-3 flex items-start justify-between">
                             <div className="flex items-center gap-2">
+                              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                                {idx + 1}
+                              </div>
                               <Clock className="h-4 w-4 text-primary" />
                               <span className="font-semibold text-primary">{activity.time}</span>
                             </div>
@@ -194,44 +231,13 @@ export function DemoResultsClient({ data, city }: { data: DemoData; city: string
 
                 <div className="lg:col-span-3">
                   <Card className="sticky top-24 h-[400px] overflow-hidden border-0 shadow-xl lg:h-[800px]">
-                    <div className="relative h-full w-full bg-gradient-to-br from-accent/20 to-secondary/20">
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
-                          <MapPin className="mx-auto mb-4 h-16 w-16 text-primary" />
-                          <p className="text-lg font-semibold text-foreground">네이버 지도 연동</p>
-                          <p className="mt-2 text-sm text-muted-foreground">
-                            실제 서비스에서는 네이버 지도 API를 통해
-                            <br />
-                            상세한 위치 정보를 표시합니다
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="absolute bottom-3 left-3 right-3 space-y-3 md:bottom-6 md:left-6 md:right-6">
-                        {currentDay.activities.slice(0, 2).map((activity, idx) => (
-                          <div
-                            key={idx}
-                            className="glass-effect animate-in fade-in slide-in-from-bottom-4 rounded-xl border border-white p-3 shadow-lg md:p-4"
-                            style={{ animationDelay: `${idx * 100}ms` }}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                                {idx + 1}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="truncate font-semibold text-foreground">{activity.title}</p>
-                                <p className="truncate text-sm text-muted-foreground">{activity.time}</p>
-                              </div>
-                              {activity.photo && <Camera className="h-5 w-5 shrink-0 text-cta-foreground" />}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="glass-effect absolute right-3 top-3 rounded-xl border border-white px-4 py-2 shadow-lg md:right-6 md:top-6">
-                        <p className="text-sm font-medium text-foreground">총 이동거리: 12.5km</p>
-                      </div>
-                    </div>
+                    <GoogleMap
+                      key={`${activeDay}-${currentDay.activities.length}`}
+                      center={mapCenter}
+                      level={13}
+                      markers={markers}
+                      selectedIndex={selectedActivityIndex}
+                    />
                   </Card>
                 </div>
               </div>
