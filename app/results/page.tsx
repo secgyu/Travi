@@ -399,7 +399,7 @@ export default function ResultsPage() {
 
         <Footer />
 
-        <ShareModal open={isShareModalOpen} onOpenChange={setIsShareModalOpen} />
+        <ShareModal open={isShareModalOpen} onOpenChange={setIsShareModalOpen} planId={planId || undefined} />
       </div>
     </>
   );

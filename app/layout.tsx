@@ -4,7 +4,6 @@ import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
-import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "트래비 - AI 기반 맞춤 여행 계획",
