@@ -108,7 +108,7 @@ export function DemoResultsClient({ data, city }: { data: DemoData; city: string
                     </div>
                   </Card>
 
-                  <Card className="glass-effect flex flex-1 items-center gap-3 border-0 px-4 py-3 shadow-md lg:flex-none lg:px-6">
+                  <Card className="glass-effect flex flex-1 items-center gap-3 border-0 px-4 py-3 shadow-md lg:flex-none lg:px-6 mb-4">
                     <DollarSign className="h-6 w-6 text-primary" />
                     <div>
                       <p className="text-xs text-muted-foreground md:text-sm">예상 경비</p>
