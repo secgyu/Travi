@@ -19,7 +19,6 @@ import {
   Train,
   Utensils,
   Camera,
-  Cloud,
   Navigation,
   ArrowLeft,
   Download,
@@ -31,15 +30,12 @@ import {
   Plus,
   GripVertical,
   DollarSign,
-  Lightbulb,
-  Smartphone,
-  Banknote,
   Loader2,
-  ShieldCheck,
 } from "lucide-react";
-import GoogleMap from "./GoogleMap";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import GoogleMap from "../../components/results/GoogleMap";
+import { usePdfDownload } from "@/hooks/use-pdf-download";
+import { WeatherCard } from "@/components/results/weather-card";
+import { TravelTips } from "@/components/results/travel-tips";
 
 interface Activity {
   time: string;
@@ -114,9 +110,38 @@ export default function ResultsPage() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [isWeatherLoading, setIsWeatherLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
 
   const { toast } = useToast();
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const days = ["일", "월", "화", "수", "목", "금", "토"];
+    return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일 (${days[date.getDay()]})`;
+  };
+
+  const { isDownloading, downloadPDF } = usePdfDownload({
+    travelPlan,
+    itinerary: localItinerary,
+    formatDate,
+    onStart: () => {
+      toast({
+        title: "PDF 생성 중...",
+        description: "잠시만 기다려주세요.",
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "PDF 다운로드 완료!",
+        description: "파일이 저장되었습니다.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "PDF 생성 실패",
+        description: "PDF 생성 중 오류가 발생했습니다.",
+      });
+    },
+  });
 
   useEffect(() => {
     if (planId) {
@@ -243,12 +268,6 @@ export default function ResultsPage() {
       </>
     );
   }
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const days = ["일", "월", "화", "수", "목", "금", "토"];
-    return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일 (${days[date.getDay()]})`;
-  };
 
   const handleDeleteActivity = (dayNum: number, activityIdx: number) => {
     setLocalItinerary(
@@ -398,163 +417,6 @@ export default function ResultsPage() {
     }
   };
 
-  const handleDownloadPDF = async () => {
-    if (!travelPlan) return;
-
-    try {
-      setIsDownloading(true);
-      toast({
-        title: "PDF 생성 중...",
-        description: "잠시만 기다려주세요.",
-      });
-
-      // PDF용 임시 iframe 생성 (CSS 격리를 위해)
-      const iframe = document.createElement("iframe");
-      iframe.style.cssText = "position: absolute; left: -9999px; top: 0; width: 850px; height: 1px;";
-      document.body.appendChild(iframe);
-
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
-      if (!iframeDoc) {
-        throw new Error("iframe 생성 실패");
-      }
-
-      iframeDoc.open();
-      iframeDoc.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-              background: #ffffff;
-              color: #000000;
-              padding: 40px;
-            }
-          </style>
-        </head>
-        <body>
-      `);
-
-      const pdfContainer = iframeDoc.body;
-
-      // PDF 내용 생성
-      let html = `
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="font-size: 28px; color: #16a34a; margin-bottom: 10px;">🌍 ${travelPlan.title}</h1>
-          <p style="font-size: 14px; color: #666;">
-            📅 ${formatDate(travelPlan.start_date)} ~ ${formatDate(travelPlan.end_date)}
-          </p>
-          <p style="font-size: 14px; color: #666;">
-            📍 ${travelPlan.destination} | 💰 예산: ₩${travelPlan.budget?.toLocaleString() || 0}원
-          </p>
-        </div>
-        <hr style="border: none; border-top: 2px solid #e5e7eb; margin: 20px 0;" />
-      `;
-
-      // 각 일차별 일정 추가
-      for (const day of localItinerary) {
-        html += `
-          <div style="margin-bottom: 30px;">
-            <h2 style="font-size: 20px; color: #16a34a; margin-bottom: 15px; padding: 10px; background: #f0fdf4; border-radius: 8px;">
-              📆 ${day.title} - ${day.date}
-            </h2>
-        `;
-
-        for (const activity of day.activities) {
-          html += `
-            <div style="margin-bottom: 15px; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="font-weight: bold; color: #16a34a;">🕐 ${activity.time}</span>
-                <span style="background: #f3f4f6; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${
-                  activity.type
-                }</span>
-              </div>
-              <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 5px;">${activity.title}</h3>
-              ${
-                activity.subtitle
-                  ? `<p style="font-size: 14px; color: #666; margin-bottom: 8px;">${activity.subtitle}</p>`
-                  : ""
-              }
-              <div style="font-size: 13px; color: #666;">
-                <p>🚇 이동: ${activity.transport}</p>
-                <p>⏱️ 소요: ${activity.duration} | 💵 비용: ${activity.price}</p>
-                ${activity.photo ? '<p style="color: #f59e0b;">📸 포토존 추천</p>' : ""}
-              </div>
-            </div>
-          `;
-        }
-
-        html += `</div>`;
-      }
-
-      // 푸터
-      html += `
-        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
-          <p style="font-size: 12px; color: #999;">Travi - AI 여행 플래너로 생성됨</p>
-        </div>
-      `;
-
-      pdfContainer.innerHTML = html;
-      iframeDoc.write("</body></html>");
-      iframeDoc.close();
-
-      // iframe 로드 대기
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      // html2canvas로 캡처
-      const canvas = await html2canvas(iframeDoc.body, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-        allowTaint: true,
-        windowWidth: 850,
-      });
-
-      // PDF 생성
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const pdf = new jsPDF("p", "mm", "a4");
-
-      // 여러 페이지 처리
-      const pageHeight = 297; // A4 height in mm
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      // 다운로드
-      const fileName = `${travelPlan.title.replace(/\s/g, "_")}_여행계획.pdf`;
-      pdf.save(fileName);
-
-      // 정리 - iframe 제거
-      document.body.removeChild(iframe);
-
-      toast({
-        title: "PDF 다운로드 완료!",
-        description: `${fileName} 파일이 저장되었습니다.`,
-      });
-    } catch (error) {
-      console.error("PDF 생성 오류:", error);
-      toast({
-        title: "PDF 생성 실패",
-        description: "PDF 생성 중 오류가 발생했습니다.",
-      });
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
   return (
     <>
       <Header />
@@ -604,7 +466,7 @@ export default function ResultsPage() {
                       variant="outline"
                       size="sm"
                       className="gap-2 rounded-xl bg-transparent"
-                      onClick={handleDownloadPDF}
+                      onClick={downloadPDF}
                       disabled={isDownloading}
                     >
                       {isDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
@@ -666,47 +528,7 @@ export default function ResultsPage() {
                 </div>
 
                 <div className="flex w-full flex-row gap-3 lg:w-auto lg:flex-col">
-                  <Card className="glass-effect flex flex-1 items-center gap-3 border-0 px-4 py-3 shadow-md lg:flex-none lg:px-6">
-                    {isWeatherLoading ? (
-                      <>
-                        <Loader2 className="h-6 w-6 text-secondary animate-spin" />
-                        <div>
-                          <p className="text-xs text-muted-foreground md:text-sm">날씨</p>
-                          <p className="text-sm font-semibold text-foreground md:text-base">로딩중...</p>
-                        </div>
-                      </>
-                    ) : weather ? (
-                      <>
-                        {weather.current.icon ? (
-                          <img
-                            src={
-                              weather.current.icon.startsWith("//")
-                                ? `https:${weather.current.icon}`
-                                : weather.current.icon
-                            }
-                            alt={weather.current.condition}
-                            className="h-10 w-10"
-                          />
-                        ) : (
-                          <Cloud className="h-6 w-6 text-secondary" />
-                        )}
-                        <div>
-                          <p className="text-xs text-muted-foreground md:text-sm">{weather.location} 날씨</p>
-                          <p className="text-sm font-semibold text-foreground md:text-base">
-                            {weather.current.condition} {weather.current.temp}°C
-                          </p>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <Cloud className="h-6 w-6 text-secondary" />
-                        <div>
-                          <p className="text-xs text-muted-foreground md:text-sm">날씨</p>
-                          <p className="text-sm font-semibold text-muted-foreground md:text-base">정보 없음</p>
-                        </div>
-                      </>
-                    )}
-                  </Card>
+                  <WeatherCard weather={weather} isLoading={isWeatherLoading} />
 
                   <Card className="glass-effect flex flex-1 items-center gap-3 border-0 px-4 py-3 shadow-md lg:flex-none lg:px-6 mb-4">
                     <DollarSign className="h-6 w-6 text-primary" />
@@ -965,43 +787,7 @@ export default function ResultsPage() {
                 </div>
               </div>
 
-              <div className="mt-12">
-                <h2 className="mb-6 text-2xl font-bold text-foreground flex items-center gap-2">
-                  <Lightbulb className="h-6 w-6 text-primary" />
-                  여행 팁
-                </h2>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <Card className="border-0 p-6 shadow-md">
-                    <div className="mb-3">
-                      <ShieldCheck className="h-8 w-8 text-secondary" />
-                    </div>
-                    <h3 className="mb-2 font-semibold text-foreground">여행자 보험</h3>
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      해외 의료비는 매우 비싸니 출국 전 여행자 보험에 꼭 가입하세요.
-                    </p>
-                  </Card>
-
-                  <Card className="border-0 p-6 shadow-md">
-                    <div className="mb-3">
-                      <Smartphone className="h-8 w-8 text-secondary" />
-                    </div>
-                    <h3 className="mb-2 font-semibold text-foreground">유심/포켓와이파이</h3>
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      공항에서 포켓와이파이를 대여하거나 현지 유심을 구매하세요.
-                    </p>
-                  </Card>
-
-                  <Card className="border-0 p-6 shadow-md">
-                    <div className="mb-3">
-                      <Banknote className="h-8 w-8 text-secondary" />
-                    </div>
-                    <h3 className="mb-2 font-semibold text-foreground">환전</h3>
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      현금 위주 사용이 많으니 출국 전 충분한 화폐를 준비하세요.
-                    </p>
-                  </Card>
-                </div>
-              </div>
+              <TravelTips />
             </div>
           </div>
         </main>
