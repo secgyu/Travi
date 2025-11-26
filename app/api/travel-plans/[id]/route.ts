@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET(
   request: NextRequest,
@@ -31,7 +33,6 @@ export async function GET(
       );
     }
 
-    // 조회수 증가
     await supabase
       .from("travel_plans")
       .update({ views_count: (travelPlan.views_count || 0) + 1 })
@@ -52,29 +53,30 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
+    const { id } = await params;
 
-    // 인증 확인
-    const { data: { user } } = await supabase.auth.getUser();
+    const session = await getServerSession(authOptions);
 
-    if (!user) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: "로그인이 필요합니다" },
         { status: 401 }
       );
     }
 
+    const userId = session.user.id;
+
     const body = await request.json();
     const { title, destination, start_date, end_date, budget, currency, travel_style, companions, status, itinerary, notes, is_public } = body;
 
-    // 기존 여행 계획 확인 및 권한 체크
     const { data: existingPlan, error: fetchError } = await supabase
       .from("travel_plans")
       .select("user_id")
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     if (fetchError || !existingPlan) {
@@ -84,12 +86,14 @@ export async function PUT(
       );
     }
 
-    if (existingPlan.user_id !== user.id) {
+    if (existingPlan.user_id && existingPlan.user_id !== userId) {
       return NextResponse.json(
         { error: "수정 권한이 없습니다" },
         { status: 403 }
       );
     }
+
+    const updateUserId = existingPlan.user_id ? undefined : userId;
 
     const { data: updatedPlan, error: updateError } = await supabase
       .from("travel_plans")
@@ -107,8 +111,9 @@ export async function PUT(
         notes,
         is_public,
         updated_at: new Date().toISOString(),
+        ...(updateUserId && { user_id: updateUserId }),
       })
-      .eq("id", params.id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -135,26 +140,28 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
+    const { id } = await params;
 
-    // 인증 확인
-    const { data: { user } } = await supabase.auth.getUser();
+    // NextAuth 세션 확인
+    const session = await getServerSession(authOptions);
 
-    if (!user) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: "로그인이 필요합니다" },
         { status: 401 }
       );
     }
 
-    // 기존 여행 계획 확인 및 권한 체크
+    const userId = session.user.id;
+
     const { data: existingPlan, error: fetchError } = await supabase
       .from("travel_plans")
       .select("user_id")
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     if (fetchError || !existingPlan) {
@@ -164,7 +171,7 @@ export async function DELETE(
       );
     }
 
-    if (existingPlan.user_id !== user.id) {
+    if (existingPlan.user_id !== userId) {
       return NextResponse.json(
         { error: "삭제 권한이 없습니다" },
         { status: 403 }
@@ -174,7 +181,7 @@ export async function DELETE(
     const { error: deleteError } = await supabase
       .from("travel_plans")
       .delete()
-      .eq("id", params.id);
+      .eq("id", id);
 
     if (deleteError) {
       console.error("여행 계획 삭제 실패:", deleteError);

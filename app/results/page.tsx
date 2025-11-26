@@ -336,8 +336,42 @@ export default function ResultsPage() {
     );
   };
 
+  const handleUpdateActivity = (
+    dayNum: number,
+    activityIdx: number,
+    field: keyof Activity,
+    value: string | boolean
+  ) => {
+    setLocalItinerary(
+      localItinerary.map((day) => {
+        if (day.day === dayNum) {
+          return {
+            ...day,
+            activities: day.activities.map((activity, idx) => {
+              if (idx === activityIdx) {
+                return { ...activity, [field]: value };
+              }
+              return activity;
+            }),
+          };
+        }
+        return day;
+      })
+    );
+  };
+
   const handleSave = async () => {
     if (!travelPlan?.id) return;
+
+    if (authLoading) return;
+    if (!user) {
+      toast({
+        title: "로그인이 필요합니다",
+        description: "여행 계획을 저장하려면 로그인해주세요.",
+      });
+      router.push(`/login?callbackUrl=/results?id=${planId}`);
+      return;
+    }
 
     try {
       const response = await fetch(`/api/travel-plans/${travelPlan.id}`, {
@@ -643,28 +677,52 @@ export default function ResultsPage() {
                             <div className="space-y-4">
                               <div>
                                 <Label>시간</Label>
-                                <Input defaultValue={activity.time} className="mt-1" />
+                                <Input
+                                  value={activity.time}
+                                  onChange={(e) => handleUpdateActivity(activeDay, idx, "time", e.target.value)}
+                                  className="mt-1"
+                                />
                               </div>
                               <div>
                                 <Label>장소명</Label>
-                                <Input defaultValue={activity.title} className="mt-1" />
+                                <Input
+                                  value={activity.title}
+                                  onChange={(e) => handleUpdateActivity(activeDay, idx, "title", e.target.value)}
+                                  className="mt-1"
+                                />
                               </div>
                               <div>
                                 <Label>현지명</Label>
-                                <Input defaultValue={activity.subtitle} className="mt-1" />
+                                <Input
+                                  value={activity.subtitle}
+                                  onChange={(e) => handleUpdateActivity(activeDay, idx, "subtitle", e.target.value)}
+                                  className="mt-1"
+                                />
                               </div>
                               <div>
                                 <Label>이동 방법</Label>
-                                <Input defaultValue={activity.transport} className="mt-1" />
+                                <Input
+                                  value={activity.transport}
+                                  onChange={(e) => handleUpdateActivity(activeDay, idx, "transport", e.target.value)}
+                                  className="mt-1"
+                                />
                               </div>
                               <div className="grid grid-cols-2 gap-3">
                                 <div>
                                   <Label>소요 시간</Label>
-                                  <Input defaultValue={activity.duration} className="mt-1" />
+                                  <Input
+                                    value={activity.duration}
+                                    onChange={(e) => handleUpdateActivity(activeDay, idx, "duration", e.target.value)}
+                                    className="mt-1"
+                                  />
                                 </div>
                                 <div>
                                   <Label>예상 비용</Label>
-                                  <Input defaultValue={activity.price} className="mt-1" />
+                                  <Input
+                                    value={activity.price}
+                                    onChange={(e) => handleUpdateActivity(activeDay, idx, "price", e.target.value)}
+                                    className="mt-1"
+                                  />
                                 </div>
                               </div>
                             </div>
