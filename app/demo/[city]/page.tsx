@@ -1,6 +1,36 @@
 import { notFound } from "next/navigation";
 import { DemoResultsClient } from "./demo-results-client";
 
+type Activity = {
+  time: string;
+  title: string;
+  subtitle: string;
+  type: string;
+  transport: string;
+  duration: string;
+  price: string;
+  photo: boolean;
+  category?: string;
+  lat?: number;
+  lng?: number;
+};
+
+type Day = {
+  day: number;
+  title: string;
+  date: string;
+  activities: Activity[];
+};
+
+type DemoData = {
+  title: string;
+  dates: string;
+  location: string;
+  budget: string;
+  center: { lat: number; lng: number };
+  itinerary: Day[];
+};
+
 const demoData = {
   tokyo: {
     title: "도쿄 3일 여행 코스",
@@ -323,5 +353,5 @@ export default async function DemoPage({ params }: { params: Promise<{ city: str
     notFound();
   }
 
-  return <DemoResultsClient data={cityData} city={city} />;
+  return <DemoResultsClient data={cityData as DemoData} city={city} />;
 }
