@@ -2,10 +2,11 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Settings, MapPin, Calendar, Heart, Clock, Edit, Trash2, Share2 } from "lucide-react";
+import { TripCard } from "@/components/my/trip-card";
+import { Settings, MapPin, Calendar, Heart, Clock } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
@@ -107,16 +108,6 @@ export default async function MyPage() {
     },
   ];
 
-  const getStatusBadge = (status: string) => {
-    const badges = {
-      upcoming: <Badge className="bg-cta text-cta-foreground">예정</Badge>,
-      ongoing: <Badge className="bg-green-600 text-white">진행중</Badge>,
-      planning: <Badge variant="outline">계획중</Badge>,
-      completed: <Badge variant="secondary">완료</Badge>,
-    };
-    return badges[status as keyof typeof badges] || <Badge variant="outline">계획중</Badge>;
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/20 via-background to-background">
       <Header />
@@ -166,55 +157,7 @@ export default async function MyPage() {
             <TabsContent value="trips">
               <div className="grid gap-6 md:grid-cols-2">
                 {trips.map((trip) => (
-                  <Card key={trip.id} className="overflow-hidden transition-all hover:shadow-lg">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="mb-2">{trip.title}</CardTitle>
-                          <CardDescription className="flex flex-col gap-1">
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {trip.destination}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {trip.dates}
-                            </span>
-                          </CardDescription>
-                        </div>
-                        {getStatusBadge(trip.status)}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="mb-4 flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">예산</span>
-                        <span className="font-semibold text-foreground">{trip.budget}</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 gap-1 bg-transparent" asChild>
-                          <Link href={`/results?id=${trip.id}`}>
-                            <Clock className="h-3 w-3" />
-                            상세보기
-                          </Link>
-                        </Button>
-                        <Button variant="outline" size="sm" className="gap-1 bg-transparent">
-                          <Share2 className="h-3 w-3" />
-                          공유
-                        </Button>
-                        <Button variant="outline" size="sm" className="gap-1 bg-transparent">
-                          <Edit className="h-3 w-3" />
-                          편집
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-1 text-destructive hover:text-destructive bg-transparent"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <TripCard key={trip.id} trip={trip} />
                 ))}
               </div>
 

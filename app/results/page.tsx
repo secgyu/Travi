@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function ResultsPage() {
   const searchParams = useSearchParams();
   const planId = searchParams.get("id");
+  const editParam = searchParams.get("edit");
 
   const {
     travelPlan,
@@ -38,7 +39,7 @@ export default function ResultsPage() {
   } = useTravelPlan({ planId });
 
   const [activeDay, setActiveDay] = useState(1);
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(editParam === "true");
   const [editingActivity, setEditingActivity] = useState<number | null>(null);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [selectedActivityIndex, setSelectedActivityIndex] = useState(0);
