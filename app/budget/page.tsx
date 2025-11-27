@@ -10,7 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Plane, Hotel, Utensils, Car, ShoppingBag, DollarSign, TrendingUp } from "lucide-react";
+import { Plus, Trash2, DollarSign, TrendingUp, Save, Loader2 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useToast } from "@/hooks/use-toast";
 
 interface BudgetItem {
   id: string;
@@ -38,6 +40,9 @@ const CURRENCY_INFO = {
 };
 
 export default function BudgetPage() {
+  const { data: session } = useSession();
+  const { toast } = useToast();
+
   const [totalBudget, setTotalBudget] = useState(0);
   const [currency, setCurrency] = useState<Currency>("KRW");
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({
@@ -50,6 +55,39 @@ export default function BudgetPage() {
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
   const [newCategory, setNewCategory] = useState("");
   const [newAmount, setNewAmount] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  useEffect(() => {
+    async function fetchBudget() {
+      if (!session?.user) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/budget");
+        const data = await response.json();
+
+        if (data.success && data.data) {
+          setTotalBudget(data.data.totalBudget || 0);
+          setCurrency(data.data.currency || "KRW");
+          setBudgetItems(
+            (data.data.items || []).map((item: { id: string; category: string; amount: number; color: string }) => ({
+              ...item,
+              icon: <DollarSign className="h-4 w-4" />,
+            }))
+          );
+        }
+      } catch {
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchBudget();
+  }, [session]);
 
   useEffect(() => {
     async function fetchExchangeRate() {
@@ -66,8 +104,7 @@ export default function BudgetPage() {
             CNY: data.rates.CNY,
           });
         }
-      } catch (error) {
-        console.error("환율 정보를 가져오는데 실패했습니다:", error);
+      } catch {
       } finally {
         setIsLoadingRate(false);
       }
@@ -76,6 +113,35 @@ export default function BudgetPage() {
     fetchExchangeRate();
   }, []);
 
+  const handleSave = async () => {
+    if (!session?.user) {
+      toast({ title: "로그인 필요", description: "예산을 저장하려면 로그인이 필요합니다." });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/budget", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          totalBudget,
+          currency,
+          items: budgetItems,
+        }),
+      });
+
+      if (!response.ok) throw new Error("저장 실패");
+
+      toast({ title: "저장 완료", description: "예산이 저장되었습니다." });
+      setHasChanges(false);
+    } catch {
+      toast({ title: "저장 실패", description: "다시 시도해주세요." });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const usedBudget = budgetItems.reduce((sum, item) => sum + item.amount, 0);
   const remainingBudget = totalBudget - usedBudget;
   const budgetPercentage = totalBudget > 0 ? (usedBudget / totalBudget) * 100 : 0;
@@ -83,31 +149,41 @@ export default function BudgetPage() {
   const handleAddItem = () => {
     if (!newCategory || !newAmount) return;
 
+    const colors = ["bg-blue-500", "bg-green-500", "bg-purple-500", "bg-orange-500", "bg-pink-500", "bg-teal-500"];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
     const newItem: BudgetItem = {
       id: Date.now().toString(),
       category: newCategory,
       amount: Number.parseInt(newAmount),
       icon: <DollarSign className="h-4 w-4" />,
-      color: "bg-gray-500",
+      color: randomColor,
     };
 
     setBudgetItems([...budgetItems, newItem]);
     setNewCategory("");
     setNewAmount("");
+    setHasChanges(true);
   };
 
   const handleRemoveItem = (id: string) => {
     setBudgetItems(budgetItems.filter((item) => item.id !== id));
+    setHasChanges(true);
   };
 
   const handleUpdateAmount = (id: string, newAmount: number) => {
     setBudgetItems(budgetItems.map((item) => (item.id === id ? { ...item, amount: newAmount } : item)));
+    setHasChanges(true);
   };
 
-  const convertToKRW = (amount: number, fromCurrency: Currency): number => {
-    if (fromCurrency === "KRW") return amount;
-    const rate = exchangeRates[fromCurrency];
-    return amount / rate;
+  const handleTotalBudgetChange = (value: number) => {
+    setTotalBudget(value);
+    setHasChanges(true);
+  };
+
+  const handleCurrencyChange = (value: Currency) => {
+    setCurrency(value);
+    setHasChanges(true);
   };
 
   const convertFromKRW = (amount: number, toCurrency: Currency): number => {
@@ -130,19 +206,38 @@ export default function BudgetPage() {
     return `1 ${currency} = ₩${Math.round(rate).toLocaleString()}`;
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-accent/20 via-background to-background">
+        <Header />
+        <main className="mx-auto max-w-5xl px-4 py-12">
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-accent/20 via-background to-background">
       <Header />
 
       <main className="mx-auto max-w-5xl px-4 py-12">
-        {/* Budget Overview */}
+        {!session?.user && (
+          <div className="mb-6 rounded-lg bg-accent/30 p-4 text-center text-sm text-muted-foreground">
+            로그인하면 예산 데이터를 저장할 수 있습니다.
+          </div>
+        )}
+
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>전체 예산</span>
               <div className="flex items-center gap-2">
                 <Label className="text-sm font-normal">통화:</Label>
-                <Select value={currency} onValueChange={(value: Currency) => setCurrency(value)}>
+                <Select value={currency} onValueChange={handleCurrencyChange}>
                   <SelectTrigger className="w-[120px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -154,6 +249,12 @@ export default function BudgetPage() {
                     <SelectItem value="CNY">🇨🇳 CNY (위안)</SelectItem>
                   </SelectContent>
                 </Select>
+                {session?.user && (
+                  <Button onClick={handleSave} disabled={isSaving || !hasChanges} size="sm" className="gap-2">
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    저장
+                  </Button>
+                )}
               </div>
             </CardTitle>
           </CardHeader>
@@ -164,7 +265,7 @@ export default function BudgetPage() {
                 id="totalBudget"
                 type="number"
                 value={totalBudget}
-                onChange={(e) => setTotalBudget(Number.parseInt(e.target.value) || 0)}
+                onChange={(e) => handleTotalBudgetChange(Number.parseInt(e.target.value) || 0)}
                 className="text-2xl font-bold"
               />
               <div className="flex items-center justify-between text-sm text-muted-foreground">
@@ -202,7 +303,6 @@ export default function BudgetPage() {
               </div>
             </div>
 
-            {/* Progress Bar */}
             <div className="space-y-2">
               <div className="h-4 overflow-hidden rounded-full bg-muted">
                 <div
@@ -219,7 +319,6 @@ export default function BudgetPage() {
           </CardContent>
         </Card>
 
-        {/* Budget Breakdown */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle>예산 항목별 배분</CardTitle>
@@ -288,7 +387,6 @@ export default function BudgetPage() {
           </CardContent>
         </Card>
 
-        {/* Add New Item */}
         <Card>
           <CardHeader>
             <CardTitle>새 항목 추가</CardTitle>
@@ -324,7 +422,6 @@ export default function BudgetPage() {
           </CardContent>
         </Card>
 
-        {/* Tips */}
         <div className="mt-8 rounded-lg bg-accent/20 p-6">
           <div className="mb-3 flex items-center gap-2 font-semibold text-foreground">
             <TrendingUp className="h-5 w-5 text-primary" />
