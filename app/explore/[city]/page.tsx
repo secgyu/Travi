@@ -4,7 +4,7 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Share2 } from "lucide-react";
 import { getCityBySlug, slugToKorean } from "@/lib/cities";
 import { CityHero } from "@/components/city/city-hero";
 import { CityQuickInfo } from "@/components/city/city-quick-info";
@@ -13,6 +13,7 @@ import { CityFoods } from "@/components/city/city-foods";
 import { CityTransportation } from "@/components/city/city-transportation";
 import { CityTips } from "@/components/city/city-tips";
 import { CityBasicInfo } from "@/components/city/city-basic-info";
+import { FavoriteButton } from "@/components/favorite-button";
 
 export async function generateStaticParams() {
   return Object.keys(slugToKorean).map((slug) => ({
@@ -33,12 +34,21 @@ export default async function CityDetailPage({ params }: { params: Promise<{ cit
       <CityHero name={city.name} country={city.country} description={city.description} heroImage={city.heroImage} />
 
       <main className="mx-auto max-w-7xl px-4 py-12">
-        <div className="mb-12 flex flex-wrap gap-3">
-          {city.highlights.map((highlight, index) => (
-            <Badge key={index} variant="secondary" className="px-4 py-2 text-sm">
-              {highlight}
-            </Badge>
-          ))}
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap gap-3">
+            {city.highlights.map((highlight, index) => (
+              <Badge key={index} variant="secondary" className="px-4 py-2 text-sm">
+                {highlight}
+              </Badge>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="gap-2">
+              <Share2 className="h-4 w-4" />
+              공유
+            </Button>
+            <FavoriteButton type="city" slug={citySlug} title={city.name} />
+          </div>
         </div>
 
         <div className="mb-16">

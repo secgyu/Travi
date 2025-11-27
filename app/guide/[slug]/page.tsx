@@ -6,11 +6,12 @@ import { Footer } from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, Clock, Share2, Bookmark } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Share2 } from "lucide-react";
 import { getGuide, getAllGuideSlugs } from "@/lib/mdx";
 import { compileMDX } from "next-mdx-remote/rsc";
 import { createMDXComponents } from "@/components/mdx-content";
 import { GuideTableOfContents } from "@/components/guide-toc";
+import { FavoriteButton } from "@/components/favorite-button";
 
 export async function generateStaticParams() {
   const slugs = await getAllGuideSlugs();
@@ -85,10 +86,7 @@ export default async function GuideDetailPage({ params }: { params: Promise<{ sl
               <Share2 className="h-4 w-4" />
               공유하기
             </Button>
-            <Button variant="outline" size="sm" className="gap-2 bg-transparent">
-              <Bookmark className="h-4 w-4" />
-              저장하기
-            </Button>
+            <FavoriteButton type="guide" slug={slug} title={metadata.title} category={metadata.category} />
           </div>
         </div>
 

@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { TripCard } from "@/components/my/trip-card";
+import { FavoriteCard } from "@/components/my/favorite-card";
 import { Settings, MapPin, Calendar, Heart, Clock } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -34,7 +35,7 @@ export default async function MyPage() {
       : "2025년 11월",
   };
 
-  let { data: travelPlans, error: plansError } = await supabase
+  let { data: travelPlans } = await supabase
     .from("travel_plans")
     .select("*")
     .eq("user_id", session.user.id)
@@ -87,25 +88,33 @@ export default async function MyPage() {
     };
   });
 
+  const { data: savedGuides } = await supabase
+    .from("saved_guides")
+    .select("*")
+    .eq("user_id", session.user.id)
+    .order("created_at", { ascending: false });
+
+  const { data: savedCities } = await supabase
+    .from("saved_cities")
+    .select("*")
+    .eq("user_id", session.user.id)
+    .order("created_at", { ascending: false });
+
   const favorites = [
-    {
-      id: 1,
-      name: "시부야 스크램블 교차로",
-      location: "일본 도쿄",
-      category: "관광",
-    },
-    {
-      id: 2,
-      name: "츠지한 시장",
-      location: "일본 도쿄",
-      category: "식당",
-    },
-    {
-      id: 3,
-      name: "도톤보리",
-      location: "일본 오사카",
-      category: "관광",
-    },
+    ...(savedGuides || []).map((guide) => ({
+      id: guide.id,
+      type: "guide" as const,
+      slug: guide.guide_slug,
+      name: guide.title,
+      category: guide.category || "가이드",
+    })),
+    ...(savedCities || []).map((city) => ({
+      id: city.id,
+      type: "city" as const,
+      slug: city.city_slug,
+      name: city.city_name,
+      category: "도시",
+    })),
   ];
 
   return (
@@ -178,24 +187,7 @@ export default async function MyPage() {
             <TabsContent value="favorites">
               <div className="grid gap-4">
                 {favorites.map((favorite) => (
-                  <Card key={favorite.id}>
-                    <CardContent className="flex items-center justify-between p-4">
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
-                          <Heart className="h-6 w-6 fill-primary text-primary" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-foreground">{favorite.name}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {favorite.location} • {favorite.category}
-                          </p>
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                        삭제
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  <FavoriteCard key={favorite.id} favorite={favorite} />
                 ))}
               </div>
 
@@ -204,7 +196,17 @@ export default async function MyPage() {
                   <CardContent className="text-center">
                     <Heart className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                     <h3 className="mb-2 text-lg font-semibold text-foreground">즐겨찾기가 비어있습니다</h3>
-                    <p className="text-sm text-muted-foreground">마음에 드는 장소를 즐겨찾기에 추가해보세요</p>
+                    <p className="mb-4 text-sm text-muted-foreground">
+                      가이드나 도시 페이지에서 ❤️ 버튼을 눌러 추가해보세요
+                    </p>
+                    <div className="flex justify-center gap-2">
+                      <Button variant="outline" asChild>
+                        <Link href="/guide">가이드 보기</Link>
+                      </Button>
+                      <Button asChild>
+                        <Link href="/explore">도시 탐색</Link>
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               )}
