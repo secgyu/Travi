@@ -11,14 +11,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Camera, Save, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Camera, Save, AlertTriangle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SettingsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
   const [profileData, setProfileData] = useState({
     name: "",
@@ -28,7 +30,16 @@ export default function SettingsPage() {
     confirmPassword: "",
   });
 
-  // 사용자 데이터 로드
+  const [notifications, setNotifications] = useState({
+    emailMarketing: true,
+    emailUpdates: true,
+    pushNotifications: false,
+  });
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
   useEffect(() => {
     if (!loading && !user) {
       router.push("/login");
@@ -36,57 +47,109 @@ export default function SettingsPage() {
     }
 
     if (user) {
-      setProfileData((prev) => ({
-        ...prev,
-        name: user.name || user.email?.split("@")[0] || "",
-        email: user.email || "",
-      }));
+      fetchUserProfile();
     }
   }, [user, loading, router]);
 
-  const [notifications, setNotifications] = useState({
-    emailMarketing: true,
-    emailUpdates: true,
-    pushNotifications: false,
-  });
+  const fetchUserProfile = async () => {
+    try {
+      const response = await fetch("/api/profile");
+      if (response.ok) {
+        const data = await response.json();
+        if (data.user) {
+          setProfileData((prev) => ({
+            ...prev,
+            name: data.user.name || user?.email?.split("@")[0] || "",
+            email: data.user.email || user?.email || "",
+          }));
+          if (data.user.preferences?.notifications) {
+            setNotifications(data.user.preferences.notifications);
+          }
+        }
+      }
+    } catch {
+      setProfileData((prev) => ({
+        ...prev,
+        name: user?.name || user?.email?.split("@")[0] || "",
+        email: user?.email || "",
+      }));
+    }
+  };
 
   const handleProfileSave = async () => {
+    setIsSaving(true);
     try {
       const response = await fetch("/api/profile", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: profileData.name }),
+      });
+
+      if (!response.ok) throw new Error("프로필 저장 실패");
+
+      toast({ title: "저장 완료", description: "프로필이 성공적으로 저장되었습니다." });
+    } catch {
+      toast({ title: "저장 실패", description: "프로필 저장에 실패했습니다." });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleNotificationsSave = async () => {
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: profileData.name,
-          bio: "", // bio 필드 추가 가능
-          preferences: {
-            // 취미나 기타 선호도 추가 가능
-            travelStyle: "미식 & 문화 탐방",
-          },
+          preferences: { notifications },
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("프로필 저장 실패");
-      }
+      if (!response.ok) throw new Error("알림 설정 저장 실패");
 
-      alert("프로필이 성공적으로 저장되었습니다!");
-    } catch (error) {
-      console.error("프로필 저장 오류:", error);
-      alert("프로필 저장에 실패했습니다. 다시 시도해주세요.");
+      toast({ title: "저장 완료", description: "알림 설정이 저장되었습니다." });
+    } catch {
+      toast({ title: "저장 실패", description: "알림 설정 저장에 실패했습니다." });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handlePasswordChange = async () => {
-    if (profileData.newPassword !== profileData.confirmPassword) {
-      alert("새 비밀번호가 일치하지 않습니다");
+    if (!profileData.currentPassword || !profileData.newPassword) {
+      toast({ title: "입력 오류", description: "모든 비밀번호 필드를 입력해주세요." });
       return;
     }
 
+    if (profileData.newPassword !== profileData.confirmPassword) {
+      toast({ title: "입력 오류", description: "새 비밀번호가 일치하지 않습니다." });
+      return;
+    }
+
+    if (profileData.newPassword.length < 6) {
+      toast({ title: "입력 오류", description: "비밀번호는 최소 6자 이상이어야 합니다." });
+      return;
+    }
+
+    setIsChangingPassword(true);
     try {
-      // TODO: API로 비밀번호 변경 구현
-      alert("비밀번호가 성공적으로 변경되었습니다!");
+      const response = await fetch("/api/auth/password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: profileData.currentPassword,
+          newPassword: profileData.newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "비밀번호 변경 실패");
+      }
+
+      toast({ title: "변경 완료", description: "비밀번호가 성공적으로 변경되었습니다." });
       setProfileData({
         ...profileData,
         currentPassword: "",
@@ -94,20 +157,48 @@ export default function SettingsPage() {
         confirmPassword: "",
       });
     } catch (error) {
-      console.error("비밀번호 변경 오류:", error);
-      alert("비밀번호 변경에 실패했습니다. 다시 시도해주세요.");
+      toast({
+        title: "변경 실패",
+        description: error instanceof Error ? error.message : "비밀번호 변경에 실패했습니다.",
+      });
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
   const handleAccountDelete = async () => {
-    if (confirm("정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
-      try {
-        alert("계정 삭제는 고객센터로 문의해주세요.");
-        // TODO: 서버 API 엔드포인트를 통한 계정 삭제 구현
-      } catch (error) {
-        console.error("계정 삭제 오류:", error);
-        alert("계정 삭제에 실패했습니다. 고객센터로 문의해주세요.");
+    const confirmed = window.confirm(
+      "정말로 계정을 삭제하시겠습니까?\n\n모든 여행 계획, 즐겨찾기 등 데이터가 영구적으로 삭제됩니다.\n이 작업은 되돌릴 수 없습니다."
+    );
+
+    if (!confirmed) return;
+
+    const doubleConfirmed = window.confirm("마지막 확인입니다. 정말 삭제하시겠습니까?");
+
+    if (!doubleConfirmed) return;
+
+    setIsDeletingAccount(true);
+    try {
+      const response = await fetch("/api/auth/account", {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "계정 삭제 실패");
       }
+
+      toast({ title: "계정 삭제 완료", description: "그동안 이용해주셔서 감사합니다." });
+
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1500);
+    } catch (error) {
+      toast({
+        title: "삭제 실패",
+        description: error instanceof Error ? error.message : "계정 삭제에 실패했습니다.",
+      });
+      setIsDeletingAccount(false);
     }
   };
 
@@ -131,7 +222,6 @@ export default function SettingsPage() {
 
       <main className="container mx-auto px-4 py-12">
         <div className="mx-auto max-w-4xl">
-          {/* 뒤로가기 버튼 */}
           <Button variant="ghost" size="sm" className="mb-6 gap-2" asChild>
             <Link href="/my">
               <ArrowLeft className="h-4 w-4" />
@@ -148,7 +238,6 @@ export default function SettingsPage() {
               <TabsTrigger value="notifications">알림</TabsTrigger>
             </TabsList>
 
-            {/* 프로필 탭 */}
             <TabsContent value="profile">
               <Card>
                 <CardHeader>
@@ -156,7 +245,6 @@ export default function SettingsPage() {
                   <CardDescription>공개 프로필 정보를 수정하세요</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* 프로필 사진 */}
                   <div className="flex items-center gap-6">
                     <Avatar className="h-24 w-24">
                       <AvatarImage src={user?.image || "/user-avatar.jpg"} alt="프로필 사진" />
@@ -173,7 +261,6 @@ export default function SettingsPage() {
 
                   <Separator />
 
-                  {/* 이름 */}
                   <div className="space-y-2">
                     <Label htmlFor="name">이름</Label>
                     <Input
@@ -183,7 +270,6 @@ export default function SettingsPage() {
                     />
                   </div>
 
-                  {/* 이메일 */}
                   <div className="space-y-2">
                     <Label htmlFor="email">이메일</Label>
                     <Input
@@ -195,17 +281,15 @@ export default function SettingsPage() {
                     <p className="text-xs text-muted-foreground">이메일 변경 시 인증이 필요합니다</p>
                   </div>
 
-                  <Button onClick={handleProfileSave} className="gap-2">
-                    <Save className="h-4 w-4" />
+                  <Button onClick={handleProfileSave} disabled={isSaving} className="gap-2">
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                     저장
                   </Button>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* 계정 탭 */}
             <TabsContent value="account" className="space-y-6">
-              {/* 비밀번호 변경 */}
               <Card>
                 <CardHeader>
                   <CardTitle>비밀번호 변경</CardTitle>
@@ -242,13 +326,13 @@ export default function SettingsPage() {
                     />
                   </div>
 
-                  <Button onClick={handlePasswordChange} className="gap-2">
+                  <Button onClick={handlePasswordChange} disabled={isChangingPassword} className="gap-2">
+                    {isChangingPassword && <Loader2 className="h-4 w-4 animate-spin" />}
                     비밀번호 변경
                   </Button>
                 </CardContent>
               </Card>
 
-              {/* 소셜 계정 연동 */}
               <Card>
                 <CardHeader>
                   <CardTitle>소셜 계정 연동</CardTitle>
@@ -262,11 +346,11 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <p className="font-medium text-foreground">카카오</p>
-                        <p className="text-sm text-muted-foreground">연동됨</p>
+                        <p className="text-sm text-muted-foreground">준비 중</p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm">
-                      연결 해제
+                    <Button variant="outline" size="sm" disabled>
+                      연결
                     </Button>
                   </div>
 
@@ -279,10 +363,10 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <p className="font-medium text-foreground">네이버</p>
-                        <p className="text-sm text-muted-foreground">연동 안됨</p>
+                        <p className="text-sm text-muted-foreground">준비 중</p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" disabled>
                       연결
                     </Button>
                   </div>
@@ -313,17 +397,18 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <p className="font-medium text-foreground">구글</p>
-                        <p className="text-sm text-muted-foreground">연동 안됨</p>
+                        <p className="text-sm text-muted-foreground">준비 중</p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" disabled>
                       연결
                     </Button>
                   </div>
+
+                  <p className="text-xs text-muted-foreground">소셜 계정 연동 기능은 곧 제공될 예정입니다.</p>
                 </CardContent>
               </Card>
 
-              {/* 계정 삭제 */}
               <Card className="border-destructive">
                 <CardHeader>
                   <CardTitle className="text-destructive">계정 삭제</CardTitle>
@@ -332,15 +417,23 @@ export default function SettingsPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button variant="destructive" onClick={handleAccountDelete} className="gap-2">
-                    <AlertTriangle className="h-4 w-4" />
+                  <Button
+                    variant="destructive"
+                    onClick={handleAccountDelete}
+                    disabled={isDeletingAccount}
+                    className="gap-2"
+                  >
+                    {isDeletingAccount ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <AlertTriangle className="h-4 w-4" />
+                    )}
                     계정 삭제
                   </Button>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* 알림 탭 */}
             <TabsContent value="notifications">
               <Card>
                 <CardHeader>
@@ -388,8 +481,8 @@ export default function SettingsPage() {
                     />
                   </div>
 
-                  <Button className="gap-2">
-                    <Save className="h-4 w-4" />
+                  <Button onClick={handleNotificationsSave} disabled={isSaving} className="gap-2">
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                     알림 설정 저장
                   </Button>
                 </CardContent>
@@ -398,7 +491,6 @@ export default function SettingsPage() {
           </Tabs>
         </div>
       </main>
-
       <Footer />
     </div>
   );

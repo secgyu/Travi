@@ -25,9 +25,9 @@ export default async function MyPage() {
   const { data: dbUser } = await supabase.from("users").select("*").eq("id", session.user.id).single();
 
   const user = {
-    name: session.user.name || session.user.email?.split("@")[0] || "사용자",
+    name: dbUser?.name || session.user.name || session.user.email?.split("@")[0] || "사용자",
     email: session.user.email || "",
-    profileImage: session.user.image || "/user-avatar.jpg",
+    profileImage: session.user.image || dbUser?.avatar_url || "/user-avatar.jpg",
     travelStyle: dbUser?.preferences?.travelStyle || "미식 & 문화 탐방",
     bio: dbUser?.bio || "",
     memberSince: dbUser?.created_at
