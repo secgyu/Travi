@@ -27,7 +27,7 @@ export default async function MyPage() {
   const user = {
     name: dbUser?.name || session.user.name || session.user.email?.split("@")[0] || "사용자",
     email: session.user.email || "",
-    profileImage: session.user.image || dbUser?.avatar_url || "/user-avatar.jpg",
+    profileImage: dbUser?.avatar_url || session.user.image || "/user-avatar.jpg",
     travelStyle: dbUser?.preferences?.travelStyle || "미식 & 문화 탐방",
     bio: dbUser?.bio || "",
     memberSince: dbUser?.created_at

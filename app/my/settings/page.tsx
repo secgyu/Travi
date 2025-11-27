@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,9 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -62,6 +65,9 @@ export default function SettingsPage() {
             name: data.user.name || user?.email?.split("@")[0] || "",
             email: data.user.email || user?.email || "",
           }));
+          if (data.user.avatar_url) {
+            setAvatarUrl(data.user.avatar_url);
+          }
           if (data.user.preferences?.notifications) {
             setNotifications(data.user.preferences.notifications);
           }
@@ -73,6 +79,53 @@ export default function SettingsPage() {
         name: user?.name || user?.email?.split("@")[0] || "",
         email: user?.email || "",
       }));
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: "업로드 실패", description: "JPG, PNG, WebP, GIF 파일만 가능합니다." });
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "업로드 실패", description: "파일 크기는 2MB 이하여야 합니다." });
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/profile/avatar", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "업로드 실패");
+      }
+
+      setAvatarUrl(data.avatarUrl);
+      toast({ title: "업로드 완료", description: "프로필 사진이 변경되었습니다." });
+    } catch (error) {
+      toast({
+        title: "업로드 실패",
+        description: error instanceof Error ? error.message : "다시 시도해주세요.",
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -247,15 +300,32 @@ export default function SettingsPage() {
                 <CardContent className="space-y-6">
                   <div className="flex items-center gap-6">
                     <Avatar className="h-24 w-24">
-                      <AvatarImage src={user?.image || "/user-avatar.jpg"} alt="프로필 사진" />
+                      <AvatarImage src={avatarUrl || user?.image || "/user-avatar.jpg"} alt="프로필 사진" />
                       <AvatarFallback>{profileData.name?.[0] || "U"}</AvatarFallback>
                     </Avatar>
                     <div>
-                      <Button variant="outline" size="sm" className="gap-2 bg-transparent">
-                        <Camera className="h-4 w-4" />
-                        사진 변경
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onChange={handleAvatarUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 bg-transparent"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingAvatar}
+                      >
+                        {isUploadingAvatar ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Camera className="h-4 w-4" />
+                        )}
+                        {isUploadingAvatar ? "업로드 중..." : "사진 변경"}
                       </Button>
-                      <p className="mt-2 text-xs text-muted-foreground">JPG, PNG 파일 (최대 2MB)</p>
+                      <p className="mt-2 text-xs text-muted-foreground">JPG, PNG, WebP, GIF (최대 2MB)</p>
                     </div>
                   </div>
 
