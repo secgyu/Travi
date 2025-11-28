@@ -15,7 +15,7 @@ import { useTravelPlan } from "@/hooks/use-travel-plan";
 import { WeatherCard } from "@/components/results/weather-card";
 import { TravelTips } from "@/components/results/travel-tips";
 import { ActivityCard } from "@/components/results/activity-card";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export default function ResultsPage() {
   const searchParams = useSearchParams();
@@ -44,8 +44,6 @@ export default function ResultsPage() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [selectedActivityIndex, setSelectedActivityIndex] = useState(0);
 
-  const { toast } = useToast();
-
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const days = ["일", "월", "화", "수", "목", "금", "토"];
@@ -57,22 +55,13 @@ export default function ResultsPage() {
     itinerary: localItinerary,
     formatDate,
     onStart: () => {
-      toast({
-        title: "PDF 생성 중...",
-        description: "잠시만 기다려주세요.",
-      });
+      toast("PDF 생성 중...", { description: "잠시만 기다려주세요." });
     },
     onSuccess: () => {
-      toast({
-        title: "PDF 다운로드 완료!",
-        description: "파일이 저장되었습니다.",
-      });
+      toast.success("PDF 다운로드 완료!", { description: "파일이 저장되었습니다." });
     },
     onError: () => {
-      toast({
-        title: "PDF 생성 실패",
-        description: "PDF 생성 중 오류가 발생했습니다.",
-      });
+      toast.error("PDF 생성 실패", { description: "PDF 생성 중 오류가 발생했습니다." });
     },
   });
 

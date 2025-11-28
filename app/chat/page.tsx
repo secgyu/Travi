@@ -12,7 +12,7 @@ import { Logo } from "@/components/logo";
 import { GiJapan, GiCastle, GiPagoda } from "react-icons/gi";
 import { MdWavingHand } from "react-icons/md";
 import { FaLandmark } from "react-icons/fa";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface Activity {
   time: string;
@@ -285,7 +285,6 @@ export default function ChatPage() {
   const [inputValue, setInputValue] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
 
   const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({ api: "/api/chat" }),
@@ -434,15 +433,11 @@ export default function ChatPage() {
 
       const result = await response.json();
 
-      toast({
-        title: "여행 계획이 저장되었습니다!",
-        description: "상세 일정 페이지로 이동합니다.",
-      });
+      toast.success("여행 계획이 저장되었습니다!", { description: "상세 일정 페이지로 이동합니다." });
 
       router.push(`/results?id=${result.data.id}`);
     } catch (error) {
-      toast({
-        title: "저장 실패",
+      toast.error("저장 실패", {
         description: error instanceof Error ? error.message : "여행 계획 저장에 실패했습니다.",
       });
       setIsSaving(false);

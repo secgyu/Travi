@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, BookOpen, MapPin, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface FavoriteCardProps {
   favorite: {
@@ -19,7 +19,6 @@ interface FavoriteCardProps {
 
 export function FavoriteCard({ favorite }: FavoriteCardProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -33,16 +32,10 @@ export function FavoriteCard({ favorite }: FavoriteCardProps) {
       if (!response.ok) {
         throw new Error("삭제 실패");
       }
-      toast({
-        title: "삭제 완료",
-        description: "즐겨찾기에서 삭제되었습니다.",
-      });
+      toast.success("삭제 완료", { description: "즐겨찾기에서 삭제되었습니다." });
       router.refresh();
     } catch {
-      toast({
-        title: "삭제 실패",
-        description: "다시 시도해주세요.",
-      });
+      toast.error("삭제 실패", { description: "다시 시도해주세요." });
     } finally {
       setIsDeleting(false);
     }

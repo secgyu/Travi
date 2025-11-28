@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import type { Activity, DayItinerary, TravelPlan, WeatherData } from "@/types/results";
 
 interface UseTravelPlanProps {
@@ -13,7 +13,6 @@ interface UseTravelPlanProps {
 export function useTravelPlan({ planId }: UseTravelPlanProps) {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const { toast } = useToast();
 
   const [travelPlan, setTravelPlan] = useState<TravelPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,10 +26,7 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
       fetchTravelPlan(planId);
     } else {
       setIsLoading(false);
-      toast({
-        title: "오류",
-        description: "여행 계획 ID가 필요합니다.",
-      });
+      toast.error("오류", { description: "여행 계획 ID가 필요합니다." });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [planId]);
@@ -62,10 +58,7 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
         throw new Error("여행 계획 데이터가 올바르지 않습니다");
       }
     } catch {
-      toast({
-        title: "오류",
-        description: "여행 계획을 불러오는데 실패했습니다.",
-      });
+      toast.error("오류", { description: "여행 계획을 불러오는데 실패했습니다." });
     } finally {
       setIsLoading(false);
     }
@@ -102,10 +95,7 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
         return day;
       })
     );
-    toast({
-      title: "장소가 삭제되었습니다",
-      description: "일정에서 선택한 장소를 삭제했습니다.",
-    });
+    toast.success("장소가 삭제되었습니다", { description: "일정에서 선택한 장소를 삭제했습니다." });
   };
 
   const handleAddActivity = (dayNum: number) => {
@@ -131,10 +121,7 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
         return day;
       })
     );
-    toast({
-      title: "새 장소가 추가되었습니다",
-      description: "상세 정보를 입력하고 저장해주세요.",
-    });
+    toast.success("새 장소가 추가되었습니다", { description: "상세 정보를 입력하고 저장해주세요." });
   };
 
   const handleMoveActivity = (dayNum: number, fromIdx: number, direction: "up" | "down") => {
@@ -181,10 +168,7 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
 
     if (authLoading) return;
     if (!user) {
-      toast({
-        title: "로그인이 필요합니다",
-        description: "여행 계획을 저장하려면 로그인해주세요.",
-      });
+      toast.error("로그인이 필요합니다", { description: "여행 계획을 저장하려면 로그인해주세요." });
       router.push(`/login?callbackUrl=/results?id=${planId}`);
       return;
     }
@@ -200,16 +184,10 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
         throw new Error("저장에 실패했습니다");
       }
 
-      toast({
-        title: "저장되었습니다",
-        description: "여행 계획이 성공적으로 저장되었습니다.",
-      });
+      toast.success("저장되었습니다", { description: "여행 계획이 성공적으로 저장되었습니다." });
       callbacks?.onSuccess?.();
     } catch {
-      toast({
-        title: "저장 실패",
-        description: "여행 계획 저장에 실패했습니다.",
-      });
+      toast.error("저장 실패", { description: "여행 계획 저장에 실패했습니다." });
     }
   };
 
@@ -217,10 +195,7 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
     if (authLoading) return;
 
     if (!user) {
-      toast({
-        title: "로그인이 필요합니다",
-        description: "여행 계획을 저장하려면 로그인해주세요.",
-      });
+      toast.error("로그인이 필요합니다", { description: "여행 계획을 저장하려면 로그인해주세요." });
       router.push(`/login?callbackUrl=/results?id=${planId}`);
       return;
     }
@@ -240,15 +215,9 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
         throw new Error("저장에 실패했습니다");
       }
 
-      toast({
-        title: "내 여행에 저장되었습니다",
-        description: "마이페이지에서 확인하실 수 있습니다.",
-      });
+      toast.success("내 여행에 저장되었습니다", { description: "마이페이지에서 확인하실 수 있습니다." });
     } catch {
-      toast({
-        title: "저장 실패",
-        description: "여행 계획 저장에 실패했습니다. 다시 시도해주세요.",
-      });
+      toast.error("저장 실패", { description: "여행 계획 저장에 실패했습니다. 다시 시도해주세요." });
     } finally {
       setIsSaving(false);
     }

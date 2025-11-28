@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Heart, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
@@ -26,7 +26,6 @@ export function FavoriteButton({
 }: FavoriteButtonProps) {
   const { data: session } = useSession();
   const router = useRouter();
-  const { toast } = useToast();
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
@@ -57,10 +56,7 @@ export function FavoriteButton({
 
   const handleClick = async () => {
     if (!session?.user) {
-      toast({
-        title: "로그인 필요",
-        description: "즐겨찾기 기능은 로그인 후 이용 가능합니다.",
-      });
+      toast.error("로그인 필요", { description: "즐겨찾기 기능은 로그인 후 이용 가능합니다." });
       router.push("/login");
       return;
     }
@@ -74,10 +70,7 @@ export function FavoriteButton({
         if (!response.ok) throw new Error("삭제 실패");
 
         setIsFavorite(false);
-        toast({
-          title: "즐겨찾기 삭제",
-          description: `"${title}"이(가) 즐겨찾기에서 삭제되었습니다.`,
-        });
+        toast.success("즐겨찾기 삭제", { description: `"${title}"이(가) 즐겨찾기에서 삭제되었습니다.` });
       } else {
         const response = await fetch("/api/favorites", {
           method: "POST",
@@ -89,26 +82,17 @@ export function FavoriteButton({
           const data = await response.json();
           if (response.status === 409) {
             setIsFavorite(true);
-            toast({
-              title: "이미 추가됨",
-              description: "이미 즐겨찾기에 추가되어 있습니다.",
-            });
+            toast("이미 추가됨", { description: "이미 즐겨찾기에 추가되어 있습니다." });
             return;
           }
           throw new Error(data.error || "추가 실패");
         }
 
         setIsFavorite(true);
-        toast({
-          title: "즐겨찾기 추가",
-          description: `"${title}"이(가) 즐겨찾기에 추가되었습니다.`,
-        });
+        toast.success("즐겨찾기 추가", { description: `"${title}"이(가) 즐겨찾기에 추가되었습니다.` });
       }
     } catch {
-      toast({
-        title: "오류 발생",
-        description: "다시 시도해주세요.",
-      });
+      toast.error("오류 발생", { description: "다시 시도해주세요." });
     } finally {
       setIsLoading(false);
     }

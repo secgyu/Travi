@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, DollarSign, TrendingUp, Save, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface BudgetItem {
   id: string;
@@ -41,7 +41,6 @@ const CURRENCY_INFO = {
 
 export default function BudgetPage() {
   const { data: session } = useSession();
-  const { toast } = useToast();
 
   const [totalBudget, setTotalBudget] = useState(0);
   const [currency, setCurrency] = useState<Currency>("KRW");
@@ -115,7 +114,7 @@ export default function BudgetPage() {
 
   const handleSave = async () => {
     if (!session?.user) {
-      toast({ title: "로그인 필요", description: "예산을 저장하려면 로그인이 필요합니다." });
+      toast.error("로그인 필요", { description: "예산을 저장하려면 로그인이 필요합니다." });
       return;
     }
 
@@ -133,10 +132,10 @@ export default function BudgetPage() {
 
       if (!response.ok) throw new Error("저장 실패");
 
-      toast({ title: "저장 완료", description: "예산이 저장되었습니다." });
+      toast.success("저장 완료", { description: "예산이 저장되었습니다." });
       setHasChanges(false);
     } catch {
-      toast({ title: "저장 실패", description: "다시 시도해주세요." });
+      toast.error("저장 실패", { description: "다시 시도해주세요." });
     } finally {
       setIsSaving(false);
     }

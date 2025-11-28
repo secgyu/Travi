@@ -15,12 +15,11 @@ import { ArrowLeft, Camera, Save, AlertTriangle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
 
   const [profileData, setProfileData] = useState({
     name: "",
@@ -88,12 +87,12 @@ export default function SettingsPage() {
 
     const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
     if (!allowedTypes.includes(file.type)) {
-      toast({ title: "업로드 실패", description: "JPG, PNG, WebP, GIF 파일만 가능합니다." });
+      toast.error("업로드 실패", { description: "JPG, PNG, WebP, GIF 파일만 가능합니다." });
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      toast({ title: "업로드 실패", description: "파일 크기는 2MB 이하여야 합니다." });
+      toast.error("업로드 실패", { description: "파일 크기는 2MB 이하여야 합니다." });
       return;
     }
 
@@ -115,10 +114,9 @@ export default function SettingsPage() {
       }
 
       setAvatarUrl(data.avatarUrl);
-      toast({ title: "업로드 완료", description: "프로필 사진이 변경되었습니다." });
+      toast.success("업로드 완료", { description: "프로필 사진이 변경되었습니다." });
     } catch (error) {
-      toast({
-        title: "업로드 실패",
+      toast.error("업로드 실패", {
         description: error instanceof Error ? error.message : "다시 시도해주세요.",
       });
     } finally {
@@ -140,9 +138,9 @@ export default function SettingsPage() {
 
       if (!response.ok) throw new Error("프로필 저장 실패");
 
-      toast({ title: "저장 완료", description: "프로필이 성공적으로 저장되었습니다." });
+      toast.success("저장 완료", { description: "프로필이 성공적으로 저장되었습니다." });
     } catch {
-      toast({ title: "저장 실패", description: "프로필 저장에 실패했습니다." });
+      toast.error("저장 실패", { description: "프로필 저장에 실패했습니다." });
     } finally {
       setIsSaving(false);
     }
@@ -161,9 +159,9 @@ export default function SettingsPage() {
 
       if (!response.ok) throw new Error("알림 설정 저장 실패");
 
-      toast({ title: "저장 완료", description: "알림 설정이 저장되었습니다." });
+      toast.success("저장 완료", { description: "알림 설정이 저장되었습니다." });
     } catch {
-      toast({ title: "저장 실패", description: "알림 설정 저장에 실패했습니다." });
+      toast.error("저장 실패", { description: "알림 설정 저장에 실패했습니다." });
     } finally {
       setIsSaving(false);
     }
@@ -171,17 +169,17 @@ export default function SettingsPage() {
 
   const handlePasswordChange = async () => {
     if (!profileData.currentPassword || !profileData.newPassword) {
-      toast({ title: "입력 오류", description: "모든 비밀번호 필드를 입력해주세요." });
+      toast.error("입력 오류", { description: "모든 비밀번호 필드를 입력해주세요." });
       return;
     }
 
     if (profileData.newPassword !== profileData.confirmPassword) {
-      toast({ title: "입력 오류", description: "새 비밀번호가 일치하지 않습니다." });
+      toast.error("입력 오류", { description: "새 비밀번호가 일치하지 않습니다." });
       return;
     }
 
     if (profileData.newPassword.length < 6) {
-      toast({ title: "입력 오류", description: "비밀번호는 최소 6자 이상이어야 합니다." });
+      toast.error("입력 오류", { description: "비밀번호는 최소 6자 이상이어야 합니다." });
       return;
     }
 
@@ -202,7 +200,7 @@ export default function SettingsPage() {
         throw new Error(data.error || "비밀번호 변경 실패");
       }
 
-      toast({ title: "변경 완료", description: "비밀번호가 성공적으로 변경되었습니다." });
+      toast.success("변경 완료", { description: "비밀번호가 성공적으로 변경되었습니다." });
       setProfileData({
         ...profileData,
         currentPassword: "",
@@ -210,8 +208,7 @@ export default function SettingsPage() {
         confirmPassword: "",
       });
     } catch (error) {
-      toast({
-        title: "변경 실패",
+      toast.error("변경 실패", {
         description: error instanceof Error ? error.message : "비밀번호 변경에 실패했습니다.",
       });
     } finally {
@@ -241,14 +238,13 @@ export default function SettingsPage() {
         throw new Error(data.error || "계정 삭제 실패");
       }
 
-      toast({ title: "계정 삭제 완료", description: "그동안 이용해주셔서 감사합니다." });
+      toast.success("계정 삭제 완료", { description: "그동안 이용해주셔서 감사합니다." });
 
       setTimeout(() => {
         window.location.href = "/";
       }, 1500);
     } catch (error) {
-      toast({
-        title: "삭제 실패",
+      toast.error("삭제 실패", {
         description: error instanceof Error ? error.message : "계정 삭제에 실패했습니다.",
       });
       setIsDeletingAccount(false);

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LinkIcon, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface ShareModalProps {
   open: boolean;
@@ -17,7 +17,6 @@ interface ShareModalProps {
 
 export function ShareModal({ open, onOpenChange, planId }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
-  const { toast } = useToast();
 
   const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/results?id=${planId}` : "";
 
@@ -26,15 +25,9 @@ export function ShareModal({ open, onOpenChange, planId }: ShareModalProps) {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      toast({
-        title: "링크가 복사되었습니다",
-        description: "클립보드에 링크가 복사되었습니다.",
-      });
+      toast.success("링크가 복사되었습니다", { description: "클립보드에 링크가 복사되었습니다." });
     } catch {
-      toast({
-        title: "복사 실패",
-        description: "링크 복사에 실패했습니다. 다시 시도해주세요.",
-      });
+      toast.error("복사 실패", { description: "링크 복사에 실패했습니다. 다시 시도해주세요." });
     }
   };
 
