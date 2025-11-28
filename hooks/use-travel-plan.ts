@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
 import { toast } from "sonner";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 import type { Activity, DayItinerary, TravelPlan, WeatherData } from "@/types/results";
 
 interface UseTravelPlanProps {
@@ -11,8 +10,7 @@ interface UseTravelPlanProps {
 }
 
 export function useTravelPlan({ planId }: UseTravelPlanProps) {
-  const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { isLoading: authLoading, requireAuth } = useRequireAuth();
 
   const [travelPlan, setTravelPlan] = useState<TravelPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -165,13 +163,9 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
 
   const handleSave = async (callbacks?: { onSuccess?: () => void }) => {
     if (!travelPlan?.id) return;
-
     if (authLoading) return;
-    if (!user) {
-      toast.error("로그인이 필요합니다", { description: "여행 계획을 저장하려면 로그인해주세요." });
-      router.push(`/login?callbackUrl=/results?id=${planId}`);
+    if (!requireAuth({ callbackUrl: `/results?id=${planId}`, description: "여행 계획을 저장하려면 로그인해주세요." }))
       return;
-    }
 
     try {
       const response = await fetch(`/api/travel-plans/${travelPlan.id}`, {
@@ -193,13 +187,8 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
 
   const handleSaveToMyTrips = async () => {
     if (authLoading) return;
-
-    if (!user) {
-      toast.error("로그인이 필요합니다", { description: "여행 계획을 저장하려면 로그인해주세요." });
-      router.push(`/login?callbackUrl=/results?id=${planId}`);
+    if (!requireAuth({ callbackUrl: `/results?id=${planId}`, description: "여행 계획을 저장하려면 로그인해주세요." }))
       return;
-    }
-
     if (!travelPlan?.id) return;
 
     try {

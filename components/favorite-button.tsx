@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Heart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 
 interface FavoriteButtonProps {
   type: "guide" | "city";
@@ -24,15 +23,14 @@ export function FavoriteButton({
   variant = "default",
   className = "",
 }: FavoriteButtonProps) {
-  const { data: session } = useSession();
-  const router = useRouter();
+  const { isAuthenticated, requireAuth } = useRequireAuth();
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     const checkFavorite = async () => {
-      if (!session?.user) {
+      if (!isAuthenticated) {
         setIsChecking(false);
         return;
       }
@@ -52,14 +50,10 @@ export function FavoriteButton({
     };
 
     checkFavorite();
-  }, [session, type, slug]);
+  }, [isAuthenticated, type, slug]);
 
   const handleClick = async () => {
-    if (!session?.user) {
-      toast.error("로그인 필요", { description: "즐겨찾기 기능은 로그인 후 이용 가능합니다." });
-      router.push("/login");
-      return;
-    }
+    if (!requireAuth({ description: "즐겨찾기 기능은 로그인 후 이용 가능합니다." })) return;
 
     setIsLoading(true);
 

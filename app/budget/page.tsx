@@ -11,8 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, DollarSign, TrendingUp, Save, Loader2 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import { toast } from "sonner";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 
 interface BudgetItem {
   id: string;
@@ -40,7 +40,7 @@ const CURRENCY_INFO = {
 };
 
 export default function BudgetPage() {
-  const { data: session } = useSession();
+  const { isAuthenticated, requireAuth } = useRequireAuth();
 
   const [totalBudget, setTotalBudget] = useState(0);
   const [currency, setCurrency] = useState<Currency>("KRW");
@@ -60,7 +60,7 @@ export default function BudgetPage() {
 
   useEffect(() => {
     async function fetchBudget() {
-      if (!session?.user) {
+      if (!isAuthenticated) {
         setIsLoading(false);
         return;
       }
@@ -86,7 +86,7 @@ export default function BudgetPage() {
     }
 
     fetchBudget();
-  }, [session]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     async function fetchExchangeRate() {
@@ -113,10 +113,7 @@ export default function BudgetPage() {
   }, []);
 
   const handleSave = async () => {
-    if (!session?.user) {
-      toast.error("로그인 필요", { description: "예산을 저장하려면 로그인이 필요합니다." });
-      return;
-    }
+    if (!requireAuth({ description: "예산을 저장하려면 로그인이 필요합니다." })) return;
 
     setIsSaving(true);
     try {
@@ -224,7 +221,7 @@ export default function BudgetPage() {
       <Header />
 
       <main className="mx-auto max-w-5xl px-4 py-12">
-        {!session?.user && (
+        {!isAuthenticated && (
           <div className="mb-6 rounded-lg bg-accent/30 p-4 text-center text-sm text-muted-foreground">
             로그인하면 예산 데이터를 저장할 수 있습니다.
           </div>
@@ -248,7 +245,7 @@ export default function BudgetPage() {
                     <SelectItem value="CNY">🇨🇳 CNY (위안)</SelectItem>
                   </SelectContent>
                 </Select>
-                {session?.user && (
+                {isAuthenticated && (
                   <Button onClick={handleSave} disabled={isSaving || !hasChanges} size="sm" className="gap-2">
                     {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                     저장
