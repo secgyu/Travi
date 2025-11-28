@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, BookOpen, MapPin, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { useAsyncAction } from "@/hooks/use-async-action";
 
 interface FavoriteCardProps {
   favorite: {
@@ -19,26 +18,25 @@ interface FavoriteCardProps {
 
 export function FavoriteCard({ favorite }: FavoriteCardProps) {
   const router = useRouter();
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDelete = async () => {
-    if (!confirm(`"${favorite.name}"을(를) 즐겨찾기에서 삭제하시겠습니까?`)) {
-      return;
-    }
-
-    setIsDeleting(true);
-    try {
+  const { execute: handleDelete, isLoading: isDeleting } = useAsyncAction(
+    async () => {
       const response = await fetch(`/api/favorites?type=${favorite.type}&slug=${favorite.slug}`, { method: "DELETE" });
-      if (!response.ok) {
-        throw new Error("삭제 실패");
-      }
-      toast.success("삭제 완료", { description: "즐겨찾기에서 삭제되었습니다." });
-      router.refresh();
-    } catch {
-      toast.error("삭제 실패", { description: "다시 시도해주세요." });
-    } finally {
-      setIsDeleting(false);
+      if (!response.ok) throw new Error("삭제 실패");
+      return response.json();
+    },
+    {
+      successMessage: "삭제 완료",
+      successDescription: "즐겨찾기에서 삭제되었습니다.",
+      errorMessage: "삭제 실패",
+      errorDescription: "다시 시도해주세요.",
+      onSuccess: () => router.refresh(),
     }
+  );
+
+  const onDeleteClick = () => {
+    if (!confirm(`"${favorite.name}"을(를) 즐겨찾기에서 삭제하시겠습니까?`)) return;
+    handleDelete();
   };
 
   const handleClick = () => {
@@ -68,7 +66,7 @@ export function FavoriteCard({ favorite }: FavoriteCardProps) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={handleDelete}
+          onClick={onDeleteClick}
           disabled={isDeleting}
           className="text-destructive hover:text-destructive"
         >

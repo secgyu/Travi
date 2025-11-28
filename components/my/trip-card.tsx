@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShareModal } from "@/components/share-modal";
 import { MapPin, Calendar, Clock, Edit, Trash2, Share2 } from "lucide-react";
-import { toast } from "sonner";
+import { useAsyncAction } from "@/hooks/use-async-action";
 
 type Trip = {
   id: string;
@@ -37,37 +37,32 @@ const getStatusBadge = (status: string) => {
 export function TripCard({ trip, onDelete }: TripCardProps) {
   const router = useRouter();
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleEdit = () => {
     router.push(`/results?id=${trip.id}&edit=true`);
   };
 
-  const handleDelete = async () => {
-    if (!confirm(`"${trip.title}" 여행을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
-      return;
-    }
-
-    setIsDeleting(true);
-    try {
-      const response = await fetch(`/api/travel-plans/${trip.id}`, {
-        method: "DELETE",
-      });
-
+  const { execute: deleteTrip, isLoading: isDeleting } = useAsyncAction(
+    async () => {
+      const response = await fetch(`/api/travel-plans/${trip.id}`, { method: "DELETE" });
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || "삭제에 실패했습니다");
       }
-
-      toast.success("여행이 삭제되었습니다");
-      onDelete?.(trip.id);
-      router.refresh();
-    } catch (error) {
-      console.error("삭제 오류:", error);
-      toast.error(error instanceof Error ? error.message : "삭제에 실패했습니다");
-    } finally {
-      setIsDeleting(false);
+      return response.json();
+    },
+    {
+      successMessage: "여행이 삭제되었습니다",
+      onSuccess: () => {
+        onDelete?.(trip.id);
+        router.refresh();
+      },
     }
+  );
+
+  const handleDelete = () => {
+    if (!confirm(`"${trip.title}" 여행을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) return;
+    deleteTrip();
   };
 
   return (

@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useAsyncAction } from "@/hooks/use-async-action";
 
 export default function SettingsPage() {
   const { user, loading } = useAuth();
@@ -35,12 +36,47 @@ export default function SettingsPage() {
     pushNotifications: false,
   });
 
-  const [isSaving, setIsSaving] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { execute: saveProfile, isLoading: isSavingProfile } = useAsyncAction(
+    async () => {
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: profileData.name }),
+      });
+      if (!response.ok) throw new Error("프로필 저장 실패");
+      return response.json();
+    },
+    {
+      successMessage: "저장 완료",
+      successDescription: "프로필이 성공적으로 저장되었습니다.",
+      errorMessage: "저장 실패",
+      errorDescription: "프로필 저장에 실패했습니다.",
+    }
+  );
+
+  const { execute: saveNotifications, isLoading: isSavingNotifications } = useAsyncAction(
+    async () => {
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preferences: { notifications } }),
+      });
+      if (!response.ok) throw new Error("알림 설정 저장 실패");
+      return response.json();
+    },
+    {
+      successMessage: "저장 완료",
+      successDescription: "알림 설정이 저장되었습니다.",
+      errorMessage: "저장 실패",
+      errorDescription: "알림 설정 저장에 실패했습니다.",
+    }
+  );
 
   useEffect(() => {
     if (!loading && !user) {
@@ -124,46 +160,6 @@ export default function SettingsPage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-    }
-  };
-
-  const handleProfileSave = async () => {
-    setIsSaving(true);
-    try {
-      const response = await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: profileData.name }),
-      });
-
-      if (!response.ok) throw new Error("프로필 저장 실패");
-
-      toast.success("저장 완료", { description: "프로필이 성공적으로 저장되었습니다." });
-    } catch {
-      toast.error("저장 실패", { description: "프로필 저장에 실패했습니다." });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleNotificationsSave = async () => {
-    setIsSaving(true);
-    try {
-      const response = await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          preferences: { notifications },
-        }),
-      });
-
-      if (!response.ok) throw new Error("알림 설정 저장 실패");
-
-      toast.success("저장 완료", { description: "알림 설정이 저장되었습니다." });
-    } catch {
-      toast.error("저장 실패", { description: "알림 설정 저장에 실패했습니다." });
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -347,8 +343,8 @@ export default function SettingsPage() {
                     <p className="text-xs text-muted-foreground">이메일 변경 시 인증이 필요합니다</p>
                   </div>
 
-                  <Button onClick={handleProfileSave} disabled={isSaving} className="gap-2">
-                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  <Button onClick={saveProfile} disabled={isSavingProfile} className="gap-2">
+                    {isSavingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                     저장
                   </Button>
                 </CardContent>
@@ -547,8 +543,12 @@ export default function SettingsPage() {
                     />
                   </div>
 
-                  <Button onClick={handleNotificationsSave} disabled={isSaving} className="gap-2">
-                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  <Button onClick={saveNotifications} disabled={isSavingNotifications} className="gap-2">
+                    {isSavingNotifications ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
                     알림 설정 저장
                   </Button>
                 </CardContent>
