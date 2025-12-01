@@ -25,7 +25,7 @@ export function CityMustVisit({ places }: CityMustVisitProps) {
         {places.map((place, index) => (
           <Card key={index} className="overflow-hidden border-0 shadow-md transition-shadow hover:shadow-lg">
             <div className="relative h-48 overflow-hidden">
-              <Image src={place.image || "/placeholder.svg"} alt={place.name} fill className="object-cover" />
+              <Image src={place.image} alt={place.name} fill className="object-cover" />
               <Badge className="absolute top-4 right-4">{place.category}</Badge>
             </div>
             <CardContent className="p-6">

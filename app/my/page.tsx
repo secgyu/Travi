@@ -128,7 +128,7 @@ export default async function MyPage() {
               <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-6">
                   <Avatar className="h-20 w-20">
-                    <AvatarImage src={user.profileImage || "/placeholder.svg"} alt={user.name} />
+                    <AvatarImage src={user.profileImage} alt={user.name} />
                     <AvatarFallback>{user.name[0]}</AvatarFallback>
                   </Avatar>
                   <div>

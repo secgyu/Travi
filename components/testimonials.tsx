@@ -7,7 +7,6 @@ export function Testimonials() {
     {
       name: "김민지",
       role: "도쿄 3일 여행",
-      image: "/user-avatar.jpg",
       content:
         "AI가 정말 제 취향을 정확히 맞춰줬어요. 특히 추천해준 카페들이 너무 좋았습니다. 계획 짜는 시간이 확 줄어서 행복했어요!",
       rating: 5,
@@ -15,7 +14,6 @@ export function Testimonials() {
     {
       name: "이준호",
       role: "방콕 4일 여행",
-      image: "/placeholder.svg?height=40&width=40",
       content:
         "처음엔 반신반의했는데, 동선이 정말 효율적이었습니다. 현지인만 아는 맛집 추천도 훌륭했고 예산 관리도 편했어요.",
       rating: 5,
@@ -23,7 +21,6 @@ export function Testimonials() {
     {
       name: "박서연",
       role: "파리 5일 여행",
-      image: "/placeholder.svg?height=40&width=40",
       content:
         "혼자 가는 여행이라 막막했는데 트래비 덕분에 완벽한 일정을 짰습니다. 치안 정보까지 알려줘서 안심하고 다녀왔어요.",
       rating: 4,
@@ -50,10 +47,10 @@ export function Testimonials() {
                     />
                   ))}
                 </div>
-                <p className="mb-6 text-muted-foreground">"{review.content}"</p>
+                <p className="mb-6 text-muted-foreground">&quot;{review.content}&quot;</p>
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarImage src={review.image || "/placeholder.svg"} alt={review.name} />
+                    <AvatarImage src={review.image} alt={review.name} />
                     <AvatarFallback>{review.name[0]}</AvatarFallback>
                   </Avatar>
                   <div>

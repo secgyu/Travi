@@ -91,13 +91,7 @@ export default async function GuideDetailPage({ params }: { params: Promise<{ sl
         </div>
 
         <div className="relative mb-8 h-[400px] w-full overflow-hidden rounded-2xl">
-          <Image
-            src={metadata.image || "/placeholder.svg"}
-            alt={metadata.title}
-            fill
-            className="object-cover"
-            priority
-          />
+          <Image src={metadata.image} alt={metadata.title} fill className="object-cover" priority />
         </div>
 
         <GuideTableOfContents items={tableOfContents} />
@@ -112,7 +106,7 @@ export default async function GuideDetailPage({ params }: { params: Promise<{ sl
                 <Card className="group overflow-hidden border-0 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                   <div className="relative h-40 overflow-hidden">
                     <Image
-                      src={related.image || "/placeholder.svg"}
+                      src={related.image}
                       alt={related.title}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-110"

@@ -123,7 +123,7 @@ export function GuideFilter({ guides }: GuideFilterProps) {
                 <Card className="group flex flex-col overflow-hidden border-0 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                   <div className="relative h-48 w-full shrink-0 overflow-hidden">
                     <Image
-                      src={guide.image || "/placeholder.svg"}
+                      src={guide.image}
                       alt={guide.title}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-110"

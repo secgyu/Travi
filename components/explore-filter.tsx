@@ -178,7 +178,7 @@ export function ExploreFilter({ destinations }: ExploreFilterProps) {
             >
               <div className="relative h-48 overflow-hidden">
                 <Image
-                  src={destination.image || "/placeholder.svg"}
+                  src={destination.image}
                   alt={destination.city}
                   fill
                   className="object-cover transition-transform duration-300 group-hover:scale-110"

@@ -10,7 +10,7 @@ interface CityHeroProps {
 export function CityHero({ name, country, description, heroImage }: CityHeroProps) {
   return (
     <div className="relative h-[400px] w-full overflow-hidden">
-      <Image src={heroImage || "/placeholder.svg"} alt={name} fill className="object-cover" priority />
+      <Image src={heroImage} alt={name} fill className="object-cover" priority />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
       <div className="absolute inset-0 flex items-end">
         <div className="mx-auto w-full max-w-7xl px-4 pb-12">
