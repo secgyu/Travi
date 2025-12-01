@@ -26,7 +26,6 @@ export async function GET(
       .eq("id", id)
       .single();
     if (error) {
-      console.error("여행 계획 조회 실패:", error);
       return NextResponse.json(
         { error: "여행 계획을 찾을 수 없습니다" },
         { status: 404 }
@@ -42,8 +41,7 @@ export async function GET(
       success: true,
       data: travelPlan,
     });
-  } catch (error) {
-    console.error("여행 계획 조회 중 오류:", error);
+  } catch {
     return NextResponse.json(
       { error: "서버 오류가 발생했습니다" },
       { status: 500 }
@@ -118,7 +116,6 @@ export async function PUT(
       .single();
 
     if (updateError) {
-      console.error("여행 계획 업데이트 실패:", updateError);
       return NextResponse.json(
         { error: "여행 계획 업데이트에 실패했습니다" },
         { status: 500 }
@@ -129,8 +126,7 @@ export async function PUT(
       success: true,
       data: updatedPlan,
     });
-  } catch (error) {
-    console.error("여행 계획 업데이트 중 오류:", error);
+  } catch {
     return NextResponse.json(
       { error: "서버 오류가 발생했습니다" },
       { status: 500 }
@@ -184,7 +180,6 @@ export async function DELETE(
       .eq("id", id);
 
     if (deleteError) {
-      console.error("여행 계획 삭제 실패:", deleteError);
       return NextResponse.json(
         { error: "여행 계획 삭제에 실패했습니다" },
         { status: 500 }
@@ -195,8 +190,7 @@ export async function DELETE(
       success: true,
       message: "여행 계획이 삭제되었습니다",
     });
-  } catch (error) {
-    console.error("여행 계획 삭제 중 오류:", error);
+  } catch {
     return NextResponse.json(
       { error: "서버 오류가 발생했습니다" },
       { status: 500 }

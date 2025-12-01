@@ -38,8 +38,7 @@ export async function getGuide(slug: string): Promise<Guide | null> {
       metadata: data as GuideMetadata,
       content,
     };
-  } catch (error) {
-    console.error(`Error loading guide ${slug}:`, error);
+  } catch {
     return null;
   }
 }

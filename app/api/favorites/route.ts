@@ -12,25 +12,17 @@ export async function GET() {
 
     const supabase = await createClient();
 
-    const { data: guides, error: guidesError } = await supabase
+    const { data: guides } = await supabase
       .from("saved_guides")
       .select("*")
       .eq("user_id", session.user.id)
       .order("created_at", { ascending: false });
 
-    if (guidesError) {
-      console.error("가이드 조회 오류:", guidesError);
-    }
-
-    const { data: cities, error: citiesError } = await supabase
+    const { data: cities } = await supabase
       .from("saved_cities")
       .select("*")
       .eq("user_id", session.user.id)
       .order("created_at", { ascending: false });
-
-    if (citiesError) {
-      console.error("도시 조회 오류:", citiesError);
-    }
 
     return NextResponse.json({
       guides: guides || [],

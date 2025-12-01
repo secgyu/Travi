@@ -43,7 +43,6 @@ export async function POST(req: Request) {
       message,
     });
   } catch (error) {
-    console.error('Geocoding API error:', error);
     return NextResponse.json(
       {
         success: false,
@@ -85,7 +84,6 @@ export async function PUT(req: Request) {
       message: `${stats.high}개 정확, ${stats.medium}개 근사, ${stats.low}개 추정`,
     });
   } catch (error) {
-    console.error('Batch geocoding API error:', error);
     return NextResponse.json(
       {
         success: false,

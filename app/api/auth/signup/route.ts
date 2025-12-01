@@ -48,7 +48,6 @@ export async function POST(req: Request) {
     });
 
     if (insertError) {
-      console.error("Insert error:", insertError);
       return NextResponse.json(
         { error: "회원가입에 실패했습니다" },
         { status: 500 }
@@ -59,8 +58,7 @@ export async function POST(req: Request) {
       { message: "회원가입이 완료되었습니다", userId },
       { status: 201 }
     );
-  } catch (error) {
-    console.error("Signup error:", error);
+  } catch {
     return NextResponse.json(
       { error: "서버 오류가 발생했습니다" },
       { status: 500 }

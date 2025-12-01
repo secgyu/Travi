@@ -86,7 +86,6 @@ async function tryGoogleGeocode(query: string): Promise<GeocodingResult | null> 
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   if (!apiKey) {
-    console.warn('⚠️ Google Maps API key not found');
     return null;
   }
 
@@ -129,14 +128,8 @@ async function tryGoogleGeocode(query: string): Promise<GeocodingResult | null> 
         source: 'google'
       };
     }
-
-    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
-      console.error(`Geocoding API error: ${data.status}`, data.error_message);
-    }
-
     return null;
-  } catch (error) {
-    console.error('❌ Geocoding request failed:', error);
+  } catch {
     return null;
   }
 }
@@ -197,10 +190,8 @@ async function askAIForCoordinates(
         };
       }
     }
-
     return null;
-  } catch (error) {
-    console.error('❌ AI geocoding failed:', error);
+  } catch {
     return null;
   }
 }

@@ -103,8 +103,7 @@ export async function POST(req: Request) {
     return result.toUIMessageStreamResponse({
       consumeSseStream: consumeStream,
     });
-  } catch (error) {
-    console.error("Chat API error:", error);
+  } catch {
     return new Response("Internal Server Error", { status: 500 });
   }
 }

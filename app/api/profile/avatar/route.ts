@@ -55,7 +55,6 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      console.error("업로드 오류:", uploadError);
       return NextResponse.json(
         { error: "파일 업로드에 실패했습니다" },
         { status: 500 }
@@ -77,7 +76,6 @@ export async function POST(request: NextRequest) {
       .eq("id", session.user.id);
 
     if (updateError) {
-      console.error("DB 업데이트 오류:", updateError);
       return NextResponse.json(
         { error: "프로필 업데이트에 실패했습니다" },
         { status: 500 }
@@ -88,8 +86,7 @@ export async function POST(request: NextRequest) {
       success: true,
       avatarUrl,
     });
-  } catch (error) {
-    console.error("아바타 업로드 오류:", error);
+  } catch {
     return NextResponse.json(
       { error: "서버 오류가 발생했습니다" },
       { status: 500 }

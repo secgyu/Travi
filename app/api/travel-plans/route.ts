@@ -81,7 +81,6 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (guestError) {
-          console.error("게스트 사용자 생성 실패:", guestError);
           return NextResponse.json(
             { error: "사용자 생성에 실패했습니다" },
             { status: 500 }
