@@ -45,14 +45,12 @@ export async function smartGeocode(
 
   const cacheKey = `${title}|${subtitle}|${destination}`;
   if (geocodeCache.has(cacheKey)) {
-    console.log(`✅ [Cache Hit] ${title}`);
     return geocodeCache.get(cacheKey)!;
   }
 
   if (subtitle && subtitle.trim()) {
     const result1 = await tryGoogleGeocode(`${subtitle}, ${destination}`);
     if (result1 && result1.confidence === 'high') {
-      console.log(`✅ [Strategy 1] High confidence: ${subtitle}, ${destination}`);
       geocodeCache.set(cacheKey, result1);
       return result1;
     }
@@ -61,7 +59,6 @@ export async function smartGeocode(
   if (subtitle && subtitle.trim()) {
     const result2 = await tryGoogleGeocode(subtitle);
     if (result2 && result2.confidence === 'high') {
-      console.log(`✅ [Strategy 2] High confidence: ${subtitle}`);
       geocodeCache.set(cacheKey, result2);
       return result2;
     }
@@ -69,7 +66,6 @@ export async function smartGeocode(
 
   const result3 = await tryGoogleGeocode(`${title}, ${destination}`);
   if (result3 && result3.confidence !== 'low') {
-    console.log(`✅ [Strategy 3] Medium confidence: ${title}, ${destination}`);
     geocodeCache.set(cacheKey, result3);
     return result3;
   }
@@ -77,13 +73,10 @@ export async function smartGeocode(
   if (process.env.OPENAI_API_KEY) {
     const aiResult = await askAIForCoordinates(title, subtitle, destination);
     if (aiResult) {
-      console.log(`✅ [Strategy 4] AI fallback: ${title}`);
       geocodeCache.set(cacheKey, aiResult);
       return aiResult;
     }
   }
-
-  console.log(`⚠️ [Strategy 5] City center fallback: ${destination}`);
   const fallback = getCityCenterCoordinates(destination);
   geocodeCache.set(cacheKey, fallback);
   return fallback;
@@ -137,10 +130,8 @@ async function tryGoogleGeocode(query: string): Promise<GeocodingResult | null> 
       };
     }
 
-    if (data.status === 'ZERO_RESULTS') {
-      console.log(`ℹ️ No results for: ${query}`);
-    } else if (data.status !== 'OK') {
-      console.error(`❌ Geocoding API error: ${data.status}`, data.error_message);
+    if (data.status !== 'OK' && data.status !== 'ZERO_RESULTS') {
+      console.error(`Geocoding API error: ${data.status}`, data.error_message);
     }
 
     return null;
@@ -232,8 +223,6 @@ export async function batchGeocode(
   places: Array<{ title: string; subtitle: string }>,
   destination: string
 ): Promise<Array<GeocodingResult>> {
-  console.log(`🔄 Batch geocoding ${places.length} places in ${destination}`);
-
   const results: GeocodingResult[] = [];
 
   for (const place of places) {
@@ -248,5 +237,4 @@ export async function batchGeocode(
 
 export function clearGeocodeCache() {
   geocodeCache.clear();
-  console.log('🗑️ Geocode cache cleared');
 }

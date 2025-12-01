@@ -53,11 +53,8 @@ export async function POST(request: NextRequest) {
           .select()
           .single();
 
-        if (createError) {
-          console.error("❌ [API] 사용자 생성 실패:", createError);
-        } else {
+        if (!createError) {
           userId = newUser.id;
-          console.log("✅ [API] 새 사용자 생성 완료:", userId);
         }
       }
     }

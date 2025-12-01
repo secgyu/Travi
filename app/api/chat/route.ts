@@ -101,11 +101,6 @@ export async function POST(req: Request) {
     });
 
     return result.toUIMessageStreamResponse({
-      onFinish: async ({ isAborted }) => {
-        if (isAborted) {
-          console.log("[travi] Chat stream aborted");
-        }
-      },
       consumeSseStream: consumeStream,
     });
   } catch (error) {
