@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 트래비 (Travi)
 
-## Getting Started
+AI 기반 여행 플래너 - 대화로 쉽게 여행 계획을 세우세요.
 
-First, run the development server:
+## 프로젝트 소개
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+여행 계획을 세우는 건 설레지만, 동시에 번거로운 일이기도 합니다. 여행지 검색, 일정 짜기, 동선 최적화, 예산 관리까지... 이 모든 과정을 AI와의 대화 한 번으로 해결할 수 있다면 어떨까요?
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**트래비**는 AI와 자연스러운 대화를 통해 맞춤형 여행 일정을 생성하고, 지도에서 바로 확인할 수 있는 서비스입니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 주요 기능
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **AI 챗봇** - GPT-4o-mini 기반 대화형 여행 일정 생성
+- **구글 맵 연동** - 여행지 위치를 지도에 시각화
+- **일정 관리** - 여행 계획 저장, 수정, 삭제
+- **예산 계산기** - 여행 경비 관리
+- **날씨 정보** - 여행지 실시간 날씨 확인
+- **여행 가이드** - 20+ 여행 팁 & 가이드 콘텐츠
+- **도시 탐색** - 인기 여행지 정보 제공
+- **즐겨찾기** - 가이드 & 도시 저장
+- **공유하기** - 여행 계획 링크 공유
+- **PDF 다운로드** - 일정표 PDF 저장
 
-## Learn More
+## 기술 스택
 
-To learn more about Next.js, take a look at the following resources:
+| 분류          | 기술                              |
+| ------------- | --------------------------------- |
+| **Framework** | Next.js, React, TypeScript        |
+| **Styling**   | Tailwind, Radix UI                |
+| **Database**  | Supabase                          |
+| **Auth**      | NextAuth.js                       |
+| **AI**        | OpenAI GPT-4o-mini, Vercel AI SDK |
+| **Maps**      | Google Maps API                   |
+| **Storage**   | Supabase Storage                  |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 라이선스
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT License
