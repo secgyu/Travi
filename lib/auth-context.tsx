@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { SessionProvider, useSession, signOut as nextAuthSignOut } from "next-auth/react";
 import type { Session } from "next-auth";
+import * as Sentry from "@sentry/nextjs";
 
 type AuthContextType = {
   user: Session["user"] | null;
@@ -22,7 +23,21 @@ function AuthContextProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const loading = status === "loading";
 
+  // Sentry 사용자 컨텍스트 설정
+  useEffect(() => {
+    if (session?.user) {
+      Sentry.setUser({
+        id: session.user.id,
+        email: session.user.email ?? undefined,
+        username: session.user.name ?? undefined,
+      });
+    } else if (status === "unauthenticated") {
+      Sentry.setUser(null);
+    }
+  }, [session, status]);
+
   const signOut = async () => {
+    Sentry.setUser(null);
     await nextAuthSignOut({ redirect: true, callbackUrl: "/" });
   };
 
