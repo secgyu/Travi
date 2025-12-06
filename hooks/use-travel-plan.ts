@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import type { Activity, DayItinerary, TravelPlan, WeatherData } from "@/types/results";
-import { track } from "@/lib/sentry";
+import { track, tag, captureWithTags } from "@/lib/sentry";
 
 interface UseTravelPlanProps {
   planId: string | null;
@@ -55,10 +55,15 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
       if (result.success && result.data) {
         setTravelPlan(result.data);
         setLocalItinerary(result.data.itinerary || []);
+
+        // 여행지 태그 설정
+        tag.travel.destination(result.data.destination);
+        tag.feature("travel-plan");
       } else {
         throw new Error("여행 계획 데이터가 올바르지 않습니다");
       }
-    } catch {
+    } catch (error) {
+      captureWithTags.travel(error as Error, "unknown", { planId: id });
       toast.error("오류", { description: "여행 계획을 불러오는데 실패했습니다." });
     } finally {
       setIsLoading(false);
@@ -185,7 +190,11 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
 
       toast.success("저장되었습니다", { description: "여행 계획이 성공적으로 저장되었습니다." });
       callbacks?.onSuccess?.();
-    } catch {
+    } catch (error) {
+      captureWithTags.travel(error as Error, travelPlan.destination, {
+        action: "save",
+        planId: travelPlan.id,
+      });
       toast.error("저장 실패", { description: "여행 계획 저장에 실패했습니다." });
     }
   };
@@ -212,7 +221,11 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
       }
 
       toast.success("내 여행에 저장되었습니다", { description: "마이페이지에서 확인하실 수 있습니다." });
-    } catch {
+    } catch (error) {
+      captureWithTags.travel(error as Error, travelPlan.destination, {
+        action: "saveToMyTrips",
+        planId: travelPlan.id,
+      });
       toast.error("저장 실패", { description: "여행 계획 저장에 실패했습니다. 다시 시도해주세요." });
     } finally {
       setIsSaving(false);

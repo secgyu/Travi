@@ -13,7 +13,7 @@ import { GiJapan, GiCastle, GiPagoda } from "react-icons/gi";
 import { MdWavingHand } from "react-icons/md";
 import { FaLandmark } from "react-icons/fa";
 import { toast } from "sonner";
-import { track } from "@/lib/sentry";
+import { track, tag, captureWithTags } from "@/lib/sentry";
 
 interface Activity {
   time: string;
@@ -359,6 +359,12 @@ export default function ChatPage() {
 
   const handleSaveTravelPlan = async () => {
     const travelInfo = extractTravelPlanInfo(messages);
+
+    // 태그 설정
+    tag.feature("chat");
+    tag.travel.destination(travelInfo.destination);
+    tag.travel.duration(travelInfo.duration);
+
     track.travel.generatePlan(travelInfo.destination, travelInfo.duration, travelInfo.budget);
 
     try {
@@ -440,6 +446,11 @@ export default function ChatPage() {
 
       router.push(`/results?id=${result.data.id}`);
     } catch (error) {
+      captureWithTags.chat(error as Error, {
+        destination: travelInfo.destination,
+        duration: travelInfo.duration,
+        action: "generatePlan",
+      });
       toast.error("저장 실패", {
         description: error instanceof Error ? error.message : "여행 계획 저장에 실패했습니다.",
       });

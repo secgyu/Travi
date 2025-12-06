@@ -96,16 +96,127 @@ export const track = {
 };
 
 // ============================================
-// 에러 캡처 헬퍼
+// 커스텀 태깅: 에러 분류 및 필터링
 // ============================================
-export const captureError = (error: Error, context?: Record<string, unknown>) => {
+export const tag = {
+  // 단일 태그 설정
+  set: (key: string, value: string) => {
+    Sentry.setTag(key, value);
+  },
+
+  // 여러 태그 한번에 설정
+  setMany: (tags: Record<string, string>) => {
+    Sentry.setTags(tags);
+  },
+
+  // 여행 관련 태그
+  travel: {
+    destination: (city: string) => Sentry.setTag("destination", city),
+    duration: (days: number) => Sentry.setTag("duration", `${days}일`),
+    budget: (range: "low" | "mid" | "high") => Sentry.setTag("budget_range", range),
+  },
+
+  // 기능별 태그
+  feature: (name: "chat" | "travel-plan" | "auth" | "explore" | "my-page") => {
+    Sentry.setTag("feature", name);
+  },
+
+  // 페이지 태그
+  page: (name: string) => {
+    Sentry.setTag("page", name);
+  },
+
+  // 에러 심각도 태그
+  severity: (level: "low" | "medium" | "high" | "critical") => {
+    Sentry.setTag("severity", level);
+  },
+
+  // 태그 초기화
+  clear: () => {
+    Sentry.setTags({
+      destination: "",
+      duration: "",
+      budget_range: "",
+      feature: "",
+      page: "",
+      severity: "",
+    });
+  },
+};
+
+// ============================================
+// 에러 캡처 헬퍼 (태그 포함)
+// ============================================
+export const captureError = (
+  error: Error,
+  options?: {
+    tags?: Record<string, string>;
+    extra?: Record<string, unknown>;
+    level?: "fatal" | "error" | "warning" | "info";
+  }
+) => {
   Sentry.withScope((scope) => {
-    if (context) {
-      Object.entries(context).forEach(([key, value]) => {
+    if (options?.tags) {
+      Object.entries(options.tags).forEach(([key, value]) => {
+        scope.setTag(key, value);
+      });
+    }
+    if (options?.extra) {
+      Object.entries(options.extra).forEach(([key, value]) => {
         scope.setExtra(key, value);
       });
     }
+    if (options?.level) {
+      scope.setLevel(options.level);
+    }
     Sentry.captureException(error);
   });
+};
+
+// ============================================
+// 태그가 포함된 에러 캡처 (편의 함수)
+// ============================================
+export const captureWithTags = {
+  // 여행 관련 에러
+  travel: (error: Error, destination: string, extra?: Record<string, unknown>) => {
+    captureError(error, {
+      tags: { feature: "travel-plan", destination },
+      extra,
+    });
+  },
+
+  // 채팅 관련 에러
+  chat: (error: Error, extra?: Record<string, unknown>) => {
+    captureError(error, {
+      tags: { feature: "chat" },
+      extra,
+    });
+  },
+
+  // 인증 관련 에러
+  auth: (error: Error, extra?: Record<string, unknown>) => {
+    captureError(error, {
+      tags: { feature: "auth" },
+      extra,
+      level: "error",
+    });
+  },
+
+  // API 에러
+  api: (error: Error, endpoint: string, extra?: Record<string, unknown>) => {
+    captureError(error, {
+      tags: { feature: "api", endpoint },
+      extra,
+    });
+  },
+
+  // 치명적 에러
+  critical: (error: Error, feature: string, extra?: Record<string, unknown>) => {
+    captureError(error, {
+      tags: { feature, severity: "critical" },
+      extra,
+      level: "fatal",
+    });
+  },
 };
 
