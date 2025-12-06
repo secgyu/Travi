@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import type { Activity, DayItinerary, TravelPlan, WeatherData } from "@/types/results";
+import { track } from "@/lib/sentry";
 
 interface UseTravelPlanProps {
   planId: string | null;
@@ -39,6 +40,8 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
   }, [travelPlan?.destination]);
 
   const fetchTravelPlan = async (id: string) => {
+    track.travel.viewPlan(id);
+
     try {
       setIsLoading(true);
       const response = await fetch(`/api/travel-plans/${id}`);
@@ -167,6 +170,8 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
     if (!requireAuth({ callbackUrl: `/results?id=${planId}`, description: "여행 계획을 저장하려면 로그인해주세요." }))
       return;
 
+    track.travel.savePlan(travelPlan.destination, travelPlan.id);
+
     try {
       const response = await fetch(`/api/travel-plans/${travelPlan.id}`, {
         method: "PUT",
@@ -190,6 +195,8 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
     if (!requireAuth({ callbackUrl: `/results?id=${planId}`, description: "여행 계획을 저장하려면 로그인해주세요." }))
       return;
     if (!travelPlan?.id) return;
+
+    track.travel.saveToMyTrips(travelPlan.destination, travelPlan.id);
 
     try {
       setIsSaving(true);

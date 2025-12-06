@@ -13,6 +13,7 @@ import { GiJapan, GiCastle, GiPagoda } from "react-icons/gi";
 import { MdWavingHand } from "react-icons/md";
 import { FaLandmark } from "react-icons/fa";
 import { toast } from "sonner";
+import { track } from "@/lib/sentry";
 
 interface Activity {
   time: string;
@@ -347,6 +348,7 @@ export default function ChatPage() {
     e.preventDefault();
     if (!inputValue.trim()) return;
 
+    track.chat.sendMessage(inputValue);
     sendMessage({ text: inputValue });
     setInputValue("");
   };
@@ -356,10 +358,11 @@ export default function ChatPage() {
   };
 
   const handleSaveTravelPlan = async () => {
+    const travelInfo = extractTravelPlanInfo(messages);
+    track.travel.generatePlan(travelInfo.destination, travelInfo.duration, travelInfo.budget);
+
     try {
       setIsSaving(true);
-
-      const travelInfo = extractTravelPlanInfo(messages);
       const itinerary = parseAllMessages(messages, travelInfo.duration);
 
       const enrichedItinerary = await Promise.all(
