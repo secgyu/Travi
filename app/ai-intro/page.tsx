@@ -7,7 +7,7 @@ import { Footer } from "@/components/footer";
 export default function AIIntroPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      <PageHeader title="트래비 AI 소개" description="당신만을 위한 완벽한 여행을 만드는 AI 기술" />
+      <PageHeader title="트래비 AI 소개" />
 
       <div className="mx-auto max-w-4xl space-y-12 px-4 py-12">
         {/* Hero Section */}

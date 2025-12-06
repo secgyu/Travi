@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Card } from "@/components/ui/card";
@@ -17,7 +17,22 @@ import { TravelTips } from "@/components/results/travel-tips";
 import { ActivityCard } from "@/components/results/activity-card";
 import { toast } from "sonner";
 
-export default function ResultsPage() {
+function ResultsLoading() {
+  return (
+    <>
+      <Header />
+      <div className="min-h-screen bg-gradient-to-b from-accent/30 via-background to-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-lg font-semibold text-foreground">여행 계획을 불러오는 중...</p>
+        </div>
+      </div>
+      <Footer />
+    </>
+  );
+}
+
+function ResultsContent() {
   const searchParams = useSearchParams();
   const planId = searchParams.get("id");
   const editParam = searchParams.get("edit");
@@ -392,5 +407,13 @@ export default function ResultsPage() {
         <ShareModal open={isShareModalOpen} onOpenChange={setIsShareModalOpen} planId={planId || undefined} />
       </div>
     </>
+  );
+}
+
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={<ResultsLoading />}>
+      <ResultsContent />
+    </Suspense>
   );
 }

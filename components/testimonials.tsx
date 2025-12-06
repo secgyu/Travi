@@ -50,7 +50,7 @@ export function Testimonials() {
                 <p className="mb-6 text-muted-foreground">&quot;{review.content}&quot;</p>
                 <div className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarImage src={review.image} alt={review.name} />
+                    <AvatarImage src={""} alt={review.name} />
                     <AvatarFallback>{review.name[0]}</AvatarFallback>
                   </Avatar>
                   <div>

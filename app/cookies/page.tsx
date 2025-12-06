@@ -6,7 +6,7 @@ import { Cookie, Settings, Shield } from "lucide-react";
 export default function CookiesPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-      <PageHeader title="쿠키 정책" description="트래비의 쿠키 사용 및 관리 정책" />
+      <PageHeader title="쿠키 정책" />
 
       <div className="mx-auto max-w-4xl space-y-8 px-4 py-12">
         {/* Introduction */}

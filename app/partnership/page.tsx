@@ -14,7 +14,7 @@ export default function PartnershipPage() {
       <Header />
 
       <div className="container mx-auto px-4 py-12">
-        <PageHeader title="파트너십" description="트래비와 함께 성장할 파트너를 찾습니다" />
+        <PageHeader title="파트너십" />
 
         {/* Hero Section */}
         <div className="mb-16 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 p-8 md:p-12">
