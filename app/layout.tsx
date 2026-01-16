@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
+import { QueryProvider } from "@/lib/query-client";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -43,11 +44,13 @@ export default function RootLayout({
         />
       </head>
       <body className={`font-sans antialiased`}>
-        <AuthProvider>
-          {children}
-          <Toaster />
-          <Analytics />
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            {children}
+            <Toaster />
+            <Analytics />
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

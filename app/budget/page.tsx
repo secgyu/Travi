@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,12 @@ interface BudgetItem {
   color: string;
 }
 
+interface BudgetData {
+  totalBudget: number;
+  currency: Currency;
+  items: BudgetItem[];
+}
+
 type Currency = "KRW" | "USD" | "EUR" | "JPY" | "CNY";
 
 interface ExchangeRates {
@@ -29,6 +36,48 @@ interface ExchangeRates {
   EUR: number;
   JPY: number;
   CNY: number;
+}
+
+const budgetKeys = {
+  budget: ["budget"] as const,
+  exchangeRate: ["exchange-rate"] as const,
+};
+
+async function fetchBudgetData(): Promise<BudgetData | null> {
+  const response = await fetch("/api/budget");
+  const data = await response.json();
+  if (!data.success || !data.data) return null;
+  return {
+    totalBudget: data.data.totalBudget || 0,
+    currency: data.data.currency || "KRW",
+    items: (data.data.items || []).map((item: { id: string; category: string; amount: number; color: string }) => ({
+      ...item,
+      icon: <DollarSign className="h-4 w-4" />,
+    })),
+  };
+}
+
+async function fetchExchangeRates(): Promise<ExchangeRates> {
+  const response = await fetch("/api/exchange-rate");
+  const data = await response.json();
+  if (data.success && data.rates) {
+    return {
+      USD: data.rates.USD,
+      EUR: data.rates.EUR,
+      JPY: data.rates.JPY,
+      CNY: data.rates.CNY,
+    };
+  }
+  return { USD: 0.00069, EUR: 0.00063, JPY: 0.0067, CNY: 0.0053 };
+}
+
+async function saveBudgetData(data: { totalBudget: number; currency: Currency; items: BudgetItem[] }): Promise<void> {
+  const response = await fetch("/api/budget", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("저장 실패");
 }
 
 const CURRENCY_INFO = {
@@ -40,104 +89,57 @@ const CURRENCY_INFO = {
 };
 
 export default function BudgetPage() {
+  const queryClient = useQueryClient();
   const { isAuthenticated, requireAuth } = useRequireAuth();
 
   const [totalBudget, setTotalBudget] = useState(0);
   const [currency, setCurrency] = useState<Currency>("KRW");
-  const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({
-    USD: 0.00069,
-    EUR: 0.00063,
-    JPY: 0.0067,
-    CNY: 0.0053,
-  });
-  const [isLoadingRate, setIsLoadingRate] = useState(true);
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
   const [newCategory, setNewCategory] = useState("");
   const [newAmount, setNewAmount] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  useEffect(() => {
-    async function fetchBudget() {
-      if (!isAuthenticated) {
-        setIsLoading(false);
-        return;
+  const { isLoading } = useQuery({
+    queryKey: budgetKeys.budget,
+    queryFn: fetchBudgetData,
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+    select: (data) => {
+      if (data && !isInitialized) {
+        setTotalBudget(data.totalBudget);
+        setCurrency(data.currency);
+        setBudgetItems(data.items);
+        setIsInitialized(true);
       }
+      return data;
+    },
+  });
 
-      try {
-        const response = await fetch("/api/budget");
-        const data = await response.json();
+  const { data: exchangeRates, isLoading: isLoadingRate } = useQuery({
+    queryKey: budgetKeys.exchangeRate,
+    queryFn: fetchExchangeRates,
+    staleTime: 30 * 60 * 1000,
+  });
 
-        if (data.success && data.data) {
-          setTotalBudget(data.data.totalBudget || 0);
-          setCurrency(data.data.currency || "KRW");
-          setBudgetItems(
-            (data.data.items || []).map((item: { id: string; category: string; amount: number; color: string }) => ({
-              ...item,
-              icon: <DollarSign className="h-4 w-4" />,
-            }))
-          );
-        }
-      } catch {
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchBudget();
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    async function fetchExchangeRate() {
-      try {
-        setIsLoadingRate(true);
-        const response = await fetch("/api/exchange-rate");
-        const data = await response.json();
-
-        if (data.success && data.rates) {
-          setExchangeRates({
-            USD: data.rates.USD,
-            EUR: data.rates.EUR,
-            JPY: data.rates.JPY,
-            CNY: data.rates.CNY,
-          });
-        }
-      } catch {
-      } finally {
-        setIsLoadingRate(false);
-      }
-    }
-
-    fetchExchangeRate();
-  }, []);
-
-  const handleSave = async () => {
-    if (!requireAuth({ description: "예산을 저장하려면 로그인이 필요합니다." })) return;
-
-    setIsSaving(true);
-    try {
-      const response = await fetch("/api/budget", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          totalBudget,
-          currency,
-          items: budgetItems,
-        }),
-      });
-
-      if (!response.ok) throw new Error("저장 실패");
-
+  const saveMutation = useMutation({
+    mutationFn: saveBudgetData,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: budgetKeys.budget });
       toast.success("저장 완료", { description: "예산이 저장되었습니다." });
       setHasChanges(false);
-    } catch {
+    },
+    onError: () => {
       toast.error("저장 실패", { description: "다시 시도해주세요." });
-    } finally {
-      setIsSaving(false);
-    }
+    },
+  });
+
+  const handleSave = () => {
+    if (!requireAuth({ description: "예산을 저장하려면 로그인이 필요합니다." })) return;
+    saveMutation.mutate({ totalBudget, currency, items: budgetItems });
   };
 
+  const rates = exchangeRates ?? { USD: 0.00069, EUR: 0.00063, JPY: 0.0067, CNY: 0.0053 };
   const usedBudget = budgetItems.reduce((sum, item) => sum + item.amount, 0);
   const remainingBudget = totalBudget - usedBudget;
   const budgetPercentage = totalBudget > 0 ? (usedBudget / totalBudget) * 100 : 0;
@@ -184,7 +186,7 @@ export default function BudgetPage() {
 
   const convertFromKRW = (amount: number, toCurrency: Currency): number => {
     if (toCurrency === "KRW") return amount;
-    const rate = exchangeRates[toCurrency];
+    const rate = rates[toCurrency];
     return amount * rate;
   };
 
@@ -198,11 +200,11 @@ export default function BudgetPage() {
 
   const getExchangeRateDisplay = () => {
     if (currency === "KRW") return null;
-    const rate = 1 / exchangeRates[currency];
+    const rate = 1 / rates[currency];
     return `1 ${currency} = ₩${Math.round(rate).toLocaleString()}`;
   };
 
-  if (isLoading) {
+  if (isAuthenticated && isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-accent/20 via-background to-background">
         <Header />
@@ -246,8 +248,17 @@ export default function BudgetPage() {
                   </SelectContent>
                 </Select>
                 {isAuthenticated && (
-                  <Button onClick={handleSave} disabled={isSaving || !hasChanges} size="sm" className="gap-2">
-                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  <Button
+                    onClick={handleSave}
+                    disabled={saveMutation.isPending || !hasChanges}
+                    size="sm"
+                    className="gap-2"
+                  >
+                    {saveMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
                     저장
                   </Button>
                 )}

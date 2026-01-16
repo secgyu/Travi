@@ -1,10 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, BookOpen, MapPin, Loader2 } from "lucide-react";
-import { useAsyncAction } from "@/hooks/use-async-action";
+import { toast } from "sonner";
+import { favoriteKeys } from "@/components/favorite-button";
 
 interface FavoriteCardProps {
   favorite: {
@@ -16,27 +18,32 @@ interface FavoriteCardProps {
   };
 }
 
+async function removeFavorite(params: { type: string; slug: string }): Promise<void> {
+  const response = await fetch(`/api/favorites?type=${params.type}&slug=${params.slug}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error("삭제 실패");
+}
+
 export function FavoriteCard({ favorite }: FavoriteCardProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const { execute: handleDelete, isLoading: isDeleting } = useAsyncAction(
-    async () => {
-      const response = await fetch(`/api/favorites?type=${favorite.type}&slug=${favorite.slug}`, { method: "DELETE" });
-      if (!response.ok) throw new Error("삭제 실패");
-      return response.json();
+  const deleteMutation = useMutation({
+    mutationFn: removeFavorite,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: favoriteKeys.all });
+      router.refresh();
+      toast.success("삭제 완료", { description: "즐겨찾기에서 삭제되었습니다." });
     },
-    {
-      successMessage: "삭제 완료",
-      successDescription: "즐겨찾기에서 삭제되었습니다.",
-      errorMessage: "삭제 실패",
-      errorDescription: "다시 시도해주세요.",
-      onSuccess: () => router.refresh(),
-    }
-  );
+    onError: () => {
+      toast.error("삭제 실패", { description: "다시 시도해주세요." });
+    },
+  });
 
   const onDeleteClick = () => {
     if (!confirm(`"${favorite.name}"을(를) 즐겨찾기에서 삭제하시겠습니까?`)) return;
-    handleDelete();
+    deleteMutation.mutate({ type: favorite.type, slug: favorite.slug });
   };
 
   const handleClick = () => {
@@ -67,10 +74,14 @@ export function FavoriteCard({ favorite }: FavoriteCardProps) {
           variant="ghost"
           size="sm"
           onClick={onDeleteClick}
-          disabled={isDeleting}
+          disabled={deleteMutation.isPending}
           className="text-destructive hover:text-destructive"
         >
-          {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className="h-4 w-4 fill-current" />}
+          {deleteMutation.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Heart className="h-4 w-4 fill-current" />
+          )}
         </Button>
       </CardContent>
     </Card>

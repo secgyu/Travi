@@ -1,92 +1,134 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import type { Activity, DayItinerary, TravelPlan, WeatherData } from "@/types/results";
 import { track, tag, captureWithTags } from "@/lib/sentry";
+
+export const travelPlanKeys = {
+  all: ["travel-plans"] as const,
+  detail: (id: string) => ["travel-plans", id] as const,
+  weather: (city: string) => ["weather", city] as const,
+};
+
+async function fetchTravelPlan(id: string): Promise<TravelPlan> {
+  const response = await fetch(`/api/travel-plans/${id}`);
+  if (!response.ok) {
+    throw new Error("여행 계획을 불러올 수 없습니다");
+  }
+  const result = await response.json();
+  if (!result.success || !result.data) {
+    throw new Error("여행 계획 데이터가 올바르지 않습니다");
+  }
+  return result.data;
+}
+
+async function fetchWeather(city: string): Promise<WeatherData> {
+  const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}&days=3`);
+  if (!response.ok) {
+    throw new Error("날씨 정보를 가져올 수 없습니다");
+  }
+  const result = await response.json();
+  if (!result.success || !result.data) {
+    throw new Error("날씨 데이터가 올바르지 않습니다");
+  }
+  return result.data;
+}
+
+async function updateTravelPlan(plan: TravelPlan & { itinerary: DayItinerary[] }): Promise<TravelPlan> {
+  const response = await fetch(`/api/travel-plans/${plan.id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(plan),
+  });
+  if (!response.ok) {
+    throw new Error("저장에 실패했습니다");
+  }
+  const result = await response.json();
+  return result.data;
+}
 
 interface UseTravelPlanProps {
   planId: string | null;
 }
 
 export function useTravelPlan({ planId }: UseTravelPlanProps) {
+  const queryClient = useQueryClient();
   const { isLoading: authLoading, requireAuth } = useRequireAuth();
-
-  const [travelPlan, setTravelPlan] = useState<TravelPlan | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [localItinerary, setLocalItinerary] = useState<DayItinerary[]>([]);
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [isWeatherLoading, setIsWeatherLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    if (planId) {
-      fetchTravelPlan(planId);
-    } else {
-      setIsLoading(false);
-      toast.error("오류", { description: "여행 계획 ID가 필요합니다." });
-    }
-  }, [planId]);
+  // 여행 계획 조회
+  const {
+    data: travelPlan,
+    isLoading,
+    error: travelPlanError,
+  } = useQuery({
+    queryKey: travelPlanKeys.detail(planId || ""),
+    queryFn: () => {
+      track.travel.viewPlan(planId!);
+      return fetchTravelPlan(planId!);
+    },
+    enabled: !!planId,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    if (travelPlan?.destination && travelPlan.destination !== "여행지") {
-      const cityName = travelPlan.destination.split(",")[0].trim();
-      if (cityName && cityName !== "여행지") {
-        fetchWeather(cityName);
+  if (travelPlan && localItinerary.length === 0 && travelPlan.itinerary?.length > 0) {
+    setLocalItinerary(travelPlan.itinerary);
+    tag.travel.destination(travelPlan.destination);
+    tag.feature("travel-plan");
+  }
+
+
+  if (travelPlanError) {
+    captureWithTags.travel(travelPlanError as Error, "unknown", { planId: planId || "" });
+  }
+
+  const cityName = travelPlan?.destination?.split(",")[0].trim();
+  const {
+    data: weather,
+    isLoading: isWeatherLoading,
+  } = useQuery({
+    queryKey: travelPlanKeys.weather(cityName || ""),
+    queryFn: () => fetchWeather(cityName!),
+    enabled: !!cityName && cityName !== "여행지",
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: (_options: { saveToMyTrips?: boolean }) => {
+      if (!travelPlan) throw new Error("여행 계획이 없습니다");
+      return updateTravelPlan({ ...travelPlan, itinerary: localItinerary });
+    },
+    onMutate: (options: { saveToMyTrips?: boolean }) => {
+      if (travelPlan) {
+        if (options.saveToMyTrips) {
+          track.travel.saveToMyTrips(travelPlan.destination, travelPlan.id);
+        } else {
+          track.travel.savePlan(travelPlan.destination, travelPlan.id);
+        }
       }
-    }
-  }, [travelPlan?.destination]);
+    },
+    onSuccess: (_, options) => {
+      queryClient.invalidateQueries({ queryKey: travelPlanKeys.all });
 
-  const fetchTravelPlan = async (id: string) => {
-    track.travel.viewPlan(id);
-
-    try {
-      setIsLoading(true);
-      const response = await fetch(`/api/travel-plans/${id}`);
-
-      if (!response.ok) {
-        throw new Error("여행 계획을 불러올 수 없습니다");
-      }
-
-      const result = await response.json();
-
-      if (result.success && result.data) {
-        setTravelPlan(result.data);
-        setLocalItinerary(result.data.itinerary || []);
-
-        // 여행지 태그 설정
-        tag.travel.destination(result.data.destination);
-        tag.feature("travel-plan");
+      if (options.saveToMyTrips) {
+        toast.success("내 여행에 저장되었습니다", { description: "마이페이지에서 확인하실 수 있습니다." });
       } else {
-        throw new Error("여행 계획 데이터가 올바르지 않습니다");
+        toast.success("저장되었습니다", { description: "여행 계획이 성공적으로 저장되었습니다." });
       }
-    } catch (error) {
-      captureWithTags.travel(error as Error, "unknown", { planId: id });
-      toast.error("오류", { description: "여행 계획을 불러오는데 실패했습니다." });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchWeather = async (destination: string) => {
-    try {
-      setIsWeatherLoading(true);
-      const response = await fetch(`/api/weather?city=${encodeURIComponent(destination)}&days=3`);
-
-      if (!response.ok) {
-        throw new Error("날씨 정보를 가져올 수 없습니다");
+    },
+    onError: (error, options) => {
+      if (travelPlan) {
+        captureWithTags.travel(error as Error, travelPlan.destination, {
+          action: options.saveToMyTrips ? "saveToMyTrips" : "save",
+          planId: travelPlan.id,
+        });
       }
-
-      const result = await response.json();
-
-      if (result.success && result.data) {
-        setWeather(result.data);
-      }
-    } finally {
-      setIsWeatherLoading(false);
-    }
-  };
+      toast.error("저장 실패", { description: "여행 계획 저장에 실패했습니다." });
+    },
+  });
 
   const handleDeleteActivity = (dayNum: number, activityIdx: number) => {
     setLocalItinerary(
@@ -168,65 +210,24 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
     );
   };
 
-  interface SaveOptions {
-    onSuccess?: () => void;
-    saveToMyTrips?: boolean;
-  }
-
-  const saveTravelPlan = async (options: SaveOptions = {}) => {
-    const { onSuccess, saveToMyTrips = false } = options;
-
+  const handleSave = async (callbacks?: { onSuccess?: () => void }) => {
     if (!travelPlan?.id) return;
     if (authLoading) return;
     if (!requireAuth({ callbackUrl: `/results?id=${planId}`, description: "여행 계획을 저장하려면 로그인해주세요." })) {
       return;
     }
 
-    // 트래킹
-    if (saveToMyTrips) {
-      track.travel.saveToMyTrips(travelPlan.destination, travelPlan.id);
-    } else {
-      track.travel.savePlan(travelPlan.destination, travelPlan.id);
-    }
-
-    try {
-      setIsSaving(true);
-
-      const response = await fetch(`/api/travel-plans/${travelPlan.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...travelPlan, itinerary: localItinerary }),
-      });
-
-      if (!response.ok) {
-        throw new Error("저장에 실패했습니다");
-      }
-
-      if (saveToMyTrips) {
-        toast.success("내 여행에 저장되었습니다", { description: "마이페이지에서 확인하실 수 있습니다." });
-      } else {
-        toast.success("저장되었습니다", { description: "여행 계획이 성공적으로 저장되었습니다." });
-      }
-
-      onSuccess?.();
-    } catch (error) {
-      captureWithTags.travel(error as Error, travelPlan.destination, {
-        action: saveToMyTrips ? "saveToMyTrips" : "save",
-        planId: travelPlan.id,
-      });
-      toast.error("저장 실패", { description: "여행 계획 저장에 실패했습니다." });
-    } finally {
-      setIsSaving(false);
-    }
+    saveMutation.mutate({ saveToMyTrips: false }, { onSuccess: callbacks?.onSuccess });
   };
 
-  // 기존 API 호환을 위한 래퍼 함수들
-  const handleSave = (callbacks?: { onSuccess?: () => void }) => {
-    return saveTravelPlan({ onSuccess: callbacks?.onSuccess });
-  };
+  const handleSaveToMyTrips = async () => {
+    if (!travelPlan?.id) return;
+    if (authLoading) return;
+    if (!requireAuth({ callbackUrl: `/results?id=${planId}`, description: "여행 계획을 저장하려면 로그인해주세요." })) {
+      return;
+    }
 
-  const handleSaveToMyTrips = () => {
-    return saveTravelPlan({ saveToMyTrips: true });
+    saveMutation.mutate({ saveToMyTrips: true });
   };
 
   const resetItinerary = () => {
@@ -236,12 +237,12 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
   };
 
   return {
-    travelPlan,
+    travelPlan: travelPlan ?? null,
     isLoading,
     localItinerary,
-    weather,
+    weather: weather ?? null,
     isWeatherLoading,
-    isSaving,
+    isSaving: saveMutation.isPending,
     handleDeleteActivity,
     handleAddActivity,
     handleMoveActivity,
@@ -251,4 +252,3 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
     resetItinerary,
   };
 }
-
