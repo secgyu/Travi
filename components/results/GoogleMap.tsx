@@ -4,6 +4,10 @@ import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 
 // Google Maps 타입 정의
+interface GoogleMapInstance {
+  setOptions: (options: { mapTypeControl: boolean }) => void;
+}
+
 interface GoogleMapsLibrary {
   maps: {
     importLibrary: (name: string) => Promise<{ AdvancedMarkerElement: AdvancedMarkerElementConstructor }>;
@@ -12,7 +16,7 @@ interface GoogleMapsLibrary {
 
 interface AdvancedMarkerElementConstructor {
   new (options: {
-    map: google.maps.Map;
+    map: GoogleMapInstance;
     position: { lat: number; lng: number };
     title: string;
     content: HTMLElement;
@@ -21,7 +25,7 @@ interface AdvancedMarkerElementConstructor {
 }
 
 interface AdvancedMarkerInstance {
-  map: google.maps.Map | null;
+  map: GoogleMapInstance | null;
 }
 
 declare global {
@@ -84,7 +88,7 @@ function createMarkerContent(index: number, isSelected: boolean): HTMLDivElement
 }
 
 interface GmpMapElement extends HTMLElement {
-  innerMap?: google.maps.Map;
+  innerMap?: GoogleMapInstance;
   center?: { lat: number; lng: number };
 }
 
