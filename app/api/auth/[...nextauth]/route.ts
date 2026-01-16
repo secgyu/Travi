@@ -4,15 +4,8 @@ import NaverProvider from "next-auth/providers/naver";
 import KakaoProvider from "next-auth/providers/kakao";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { createClient as createBrowserClient } from "@/utils/supabase/client";
-import { createClient } from '@supabase/supabase-js';
+import { createServiceClient } from "@/utils/supabase/server";
 import bcrypt from "bcryptjs";
-
-function createServerSupabaseClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-  );
-}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -81,7 +74,7 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }) {
       if (account?.provider !== "credentials") {
         try {
-          const supabase = createServerSupabaseClient();
+          const supabase = createServiceClient();
 
           const { data: existingUser } = await supabase
             .from("users")

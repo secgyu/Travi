@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { createClient } from '@supabase/supabase-js';
-
-function createServerSupabaseClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-  );
-}
+import { createServiceClient } from "@/utils/supabase/server";
 
 export async function GET() {
   try {
@@ -21,7 +14,7 @@ export async function GET() {
       );
     }
 
-    const supabase = createServerSupabaseClient();
+    const supabase = createServiceClient();
 
     const { data: user, error } = await supabase
       .from("users")
@@ -59,7 +52,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { name, bio, preferences } = body;
 
-    const supabase = createServerSupabaseClient();
+    const supabase = createServiceClient();
 
     const updateData: any = {
       updated_at: new Date().toISOString(),
