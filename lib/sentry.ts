@@ -3,7 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 // ============================================
 // 데코레이터: @Track("category", "message")
 // ============================================
-export function Track(category: string, message: string | ((...args: unknown[]) => string)) {
+export function Track(category: string, message: string | ((...args: never[]) => string)) {
   return function (
     _target: unknown,
     _propertyKey: string,
@@ -12,7 +12,7 @@ export function Track(category: string, message: string | ((...args: unknown[]) 
     const originalMethod = descriptor.value;
 
     descriptor.value = function (...args: unknown[]) {
-      const msg = typeof message === "function" ? message(...args) : message;
+      const msg = typeof message === "function" ? message(...(args as never[])) : message;
 
       Sentry.addBreadcrumb({
         category,
