@@ -26,10 +26,9 @@ export default withSentryConfig(withMDX(nextConfig), {
   // For all available options, see:
   // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
-  org: "asd-31",
-
-  project: "javascript-nextjs",
-  authToken: "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",
+  org: process.env.SENTRY_ORG || "asd-31",
+  project: process.env.SENTRY_PROJECT || "javascript-nextjs",
+  authToken: process.env.SENTRY_AUTH_TOKEN,
 
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,

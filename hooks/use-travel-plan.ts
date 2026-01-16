@@ -27,7 +27,6 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
       setIsLoading(false);
       toast.error("오류", { description: "여행 계획 ID가 필요합니다." });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [planId]);
 
   useEffect(() => {
@@ -169,43 +168,26 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
     );
   };
 
-  const handleSave = async (callbacks?: { onSuccess?: () => void }) => {
+  interface SaveOptions {
+    onSuccess?: () => void;
+    saveToMyTrips?: boolean;
+  }
+
+  const saveTravelPlan = async (options: SaveOptions = {}) => {
+    const { onSuccess, saveToMyTrips = false } = options;
+
     if (!travelPlan?.id) return;
     if (authLoading) return;
-    if (!requireAuth({ callbackUrl: `/results?id=${planId}`, description: "여행 계획을 저장하려면 로그인해주세요." }))
+    if (!requireAuth({ callbackUrl: `/results?id=${planId}`, description: "여행 계획을 저장하려면 로그인해주세요." })) {
       return;
-
-    track.travel.savePlan(travelPlan.destination, travelPlan.id);
-
-    try {
-      const response = await fetch(`/api/travel-plans/${travelPlan.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...travelPlan, itinerary: localItinerary }),
-      });
-
-      if (!response.ok) {
-        throw new Error("저장에 실패했습니다");
-      }
-
-      toast.success("저장되었습니다", { description: "여행 계획이 성공적으로 저장되었습니다." });
-      callbacks?.onSuccess?.();
-    } catch (error) {
-      captureWithTags.travel(error as Error, travelPlan.destination, {
-        action: "save",
-        planId: travelPlan.id,
-      });
-      toast.error("저장 실패", { description: "여행 계획 저장에 실패했습니다." });
     }
-  };
 
-  const handleSaveToMyTrips = async () => {
-    if (authLoading) return;
-    if (!requireAuth({ callbackUrl: `/results?id=${planId}`, description: "여행 계획을 저장하려면 로그인해주세요." }))
-      return;
-    if (!travelPlan?.id) return;
-
-    track.travel.saveToMyTrips(travelPlan.destination, travelPlan.id);
+    // 트래킹
+    if (saveToMyTrips) {
+      track.travel.saveToMyTrips(travelPlan.destination, travelPlan.id);
+    } else {
+      track.travel.savePlan(travelPlan.destination, travelPlan.id);
+    }
 
     try {
       setIsSaving(true);
@@ -220,16 +202,31 @@ export function useTravelPlan({ planId }: UseTravelPlanProps) {
         throw new Error("저장에 실패했습니다");
       }
 
-      toast.success("내 여행에 저장되었습니다", { description: "마이페이지에서 확인하실 수 있습니다." });
+      if (saveToMyTrips) {
+        toast.success("내 여행에 저장되었습니다", { description: "마이페이지에서 확인하실 수 있습니다." });
+      } else {
+        toast.success("저장되었습니다", { description: "여행 계획이 성공적으로 저장되었습니다." });
+      }
+
+      onSuccess?.();
     } catch (error) {
       captureWithTags.travel(error as Error, travelPlan.destination, {
-        action: "saveToMyTrips",
+        action: saveToMyTrips ? "saveToMyTrips" : "save",
         planId: travelPlan.id,
       });
-      toast.error("저장 실패", { description: "여행 계획 저장에 실패했습니다. 다시 시도해주세요." });
+      toast.error("저장 실패", { description: "여행 계획 저장에 실패했습니다." });
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // 기존 API 호환을 위한 래퍼 함수들
+  const handleSave = (callbacks?: { onSuccess?: () => void }) => {
+    return saveTravelPlan({ onSuccess: callbacks?.onSuccess });
+  };
+
+  const handleSaveToMyTrips = () => {
+    return saveTravelPlan({ saveToMyTrips: true });
   };
 
   const resetItinerary = () => {

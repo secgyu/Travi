@@ -15,6 +15,7 @@ import { useTravelPlan } from "@/hooks/use-travel-plan";
 import { WeatherCard } from "@/components/results/weather-card";
 import { TravelTips } from "@/components/results/travel-tips";
 import { ActivityCard } from "@/components/results/activity-card";
+import { calculateTotalDistance, formatDistance } from "@/lib/distance";
 import { toast } from "sonner";
 
 function ResultsLoading() {
@@ -100,6 +101,9 @@ function ResultsContent() {
       : currentDay?.activities?.[0]?.lat && currentDay?.activities?.[0]?.lng
       ? { lat: currentDay.activities[0].lat, lng: currentDay.activities[0].lng }
       : null;
+
+  // 현재 일차의 총 이동거리 계산
+  const totalDistance = currentDay?.activities ? calculateTotalDistance(currentDay.activities) : 0;
 
   if (isLoading) {
     return (
@@ -378,9 +382,13 @@ function ResultsContent() {
                             </div>
                           </div>
                         )}
-                        <div className="glass-effect absolute right-3 top-3 rounded-xl border border-white px-4 py-2 shadow-lg md:right-6 md:top-6">
-                          <p className="text-sm font-medium text-foreground">총 이동거리: 12.5km</p>
-                        </div>
+                        {totalDistance > 0 && (
+                          <div className="glass-effect absolute right-3 top-3 rounded-xl border border-white px-4 py-2 shadow-lg md:right-6 md:top-6">
+                            <p className="text-sm font-medium text-foreground">
+                              총 이동거리: {formatDistance(totalDistance)}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="relative h-full w-full bg-gradient-to-br from-accent/20 to-secondary/20 flex items-center justify-center">
