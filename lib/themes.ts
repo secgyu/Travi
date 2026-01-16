@@ -1,9 +1,9 @@
-import { Utensils, Landmark, ShoppingBag, Mountain } from "lucide-react";
+import { Utensils, Landmark, ShoppingBag, Mountain, type LucideIcon } from "lucide-react";
 
 export interface Theme {
   id: string;
   title: string;
-  icon: any;
+  icon: LucideIcon;
   description: string;
   longDescription: string;
   color: string;

@@ -3,16 +3,39 @@
 import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// Google Maps 타입 정의
+interface GoogleMapsLibrary {
+  maps: {
+    importLibrary: (name: string) => Promise<{ AdvancedMarkerElement: AdvancedMarkerElementConstructor }>;
+  };
+}
+
+interface AdvancedMarkerElementConstructor {
+  new (options: {
+    map: google.maps.Map;
+    position: { lat: number; lng: number };
+    title: string;
+    content: HTMLElement;
+    zIndex: number;
+  }): AdvancedMarkerInstance;
+}
+
+interface AdvancedMarkerInstance {
+  map: google.maps.Map | null;
+}
+
 declare global {
   interface Window {
-    google: any;
+    google: GoogleMapsLibrary;
   }
 }
 
 declare module "react" {
   interface IntrinsicElements {
-    "gmp-map": any;
+    "gmp-map": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+      zoom?: number;
+      "map-id"?: string;
+    };
   }
 }
 
@@ -61,14 +84,14 @@ function createMarkerContent(index: number, isSelected: boolean): HTMLDivElement
 }
 
 interface GmpMapElement extends HTMLElement {
-  innerMap?: any;
+  innerMap?: google.maps.Map;
   center?: { lat: number; lng: number };
 }
 
 function GoogleMap({ center, level = 3, markers = [], selectedIndex = 0 }: GoogleMapProps) {
   const container = useRef<GmpMapElement | null>(null);
   const [isLoading, setIsLoading] = useState(() => (typeof window !== "undefined" ? !window.google : true));
-  const markersRef = useRef<any[]>([]);
+  const markersRef = useRef<AdvancedMarkerInstance[]>([]);
 
   useEffect(() => {
     if (container.current && center) {

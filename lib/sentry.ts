@@ -3,8 +3,7 @@ import * as Sentry from "@sentry/nextjs";
 // ============================================
 // 데코레이터: @Track("category", "message")
 // ============================================
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function Track(category: string, message: string | ((...args: any[]) => string)) {
+export function Track(category: string, message: string | ((...args: unknown[]) => string)) {
   return function (
     _target: unknown,
     _propertyKey: string,
@@ -12,8 +11,7 @@ export function Track(category: string, message: string | ((...args: any[]) => s
   ) {
     const originalMethod = descriptor.value;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    descriptor.value = function (...args: any[]) {
+    descriptor.value = function (...args: unknown[]) {
       const msg = typeof message === "function" ? message(...args) : message;
 
       Sentry.addBreadcrumb({

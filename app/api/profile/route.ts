@@ -54,7 +54,14 @@ export async function PUT(request: NextRequest) {
 
     const supabase = createServiceClient();
 
-    const updateData: any = {
+    interface UserUpdateData {
+      updated_at: string;
+      name?: string;
+      bio?: string;
+      preferences?: Record<string, unknown>;
+    }
+
+    const updateData: UserUpdateData = {
       updated_at: new Date().toISOString(),
     };
 
