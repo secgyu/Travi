@@ -310,11 +310,13 @@ function ResultsContent() {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="mb-4 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 p-4">
-                      <p className="text-center text-lg font-semibold text-foreground">{currentDay.date}</p>
-                    </div>
+                    {currentDay ? (
+                      <>
+                        <div className="mb-4 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 p-4">
+                          <p className="text-center text-lg font-semibold text-foreground">{currentDay.date}</p>
+                        </div>
 
-                    {currentDay.activities.map((activity, idx) => (
+                        {currentDay.activities.map((activity, idx) => (
                       <ActivityCard
                         key={idx}
                         activity={activity}
@@ -332,15 +334,22 @@ function ResultsContent() {
                         onToggleEdit={setEditingActivity}
                       />
                     ))}
-                    {isEditMode && (
-                      <Button
-                        variant="outline"
-                        className="w-full gap-2 rounded-xl border-2 border-dashed border-primary py-6 hover:bg-primary/5 bg-transparent"
-                        onClick={() => handleAddActivity(activeDay)}
-                      >
-                        <Plus className="h-5 w-5" />
-                        새로운 장소 추가
-                      </Button>
+                        {isEditMode && (
+                          <Button
+                            variant="outline"
+                            className="w-full gap-2 rounded-xl border-2 border-dashed border-primary py-6 hover:bg-primary/5 bg-transparent"
+                            onClick={() => handleAddActivity(activeDay)}
+                          >
+                            <Plus className="h-5 w-5" />
+                            새로운 장소 추가
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      <div className="rounded-xl bg-accent/50 p-8 text-center">
+                        <MapPin className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                        <p className="text-muted-foreground">일정을 불러오는 중입니다...</p>
+                      </div>
                     )}
                   </div>
                 </div>

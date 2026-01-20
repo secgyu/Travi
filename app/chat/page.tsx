@@ -147,8 +147,7 @@ export default function ChatPage() {
         }))
       );
 
-      const today = new Date();
-      const startDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+      const startDate = travelInfo.startDate;
       const endDate = new Date(startDate.getTime() + (travelInfo.duration - 1) * 24 * 60 * 60 * 1000);
 
       const travelPlanData = {

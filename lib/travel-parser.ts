@@ -20,6 +20,82 @@ const EXCLUDE_DESTINATIONS = [
 ];
 
 /**
+ * 시작 날짜 파싱 (내일, 모레, N일 후, 다음주 등)
+ */
+function parseStartDate(text: string): Date {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // "M월 D일부터" 패턴 우선 검색 (예: 1월 20일부터, 2월 3일부터)
+  const specificDateWithFromMatch = text.match(/(\d{1,2})월\s*(\d{1,2})일\s*부터/);
+  if (specificDateWithFromMatch) {
+    const month = parseInt(specificDateWithFromMatch[1]) - 1;
+    const day = parseInt(specificDateWithFromMatch[2]);
+    const specificDate = new Date(today.getFullYear(), month, day);
+    // 이미 지난 날짜면 내년으로
+    if (specificDate < today) {
+      specificDate.setFullYear(today.getFullYear() + 1);
+    }
+    return specificDate;
+  }
+
+  // "내일부터", "내일" 패턴
+  if (text.includes("내일부터") || text.includes("내일 부터")) {
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    return tomorrow;
+  }
+
+  // "모레부터", "모레" 패턴
+  if (text.includes("모레부터") || text.includes("모레 부터")) {
+    const dayAfterTomorrow = new Date(today);
+    dayAfterTomorrow.setDate(today.getDate() + 2);
+    return dayAfterTomorrow;
+  }
+
+  // "N일 후부터", "N일 뒤부터" 패턴
+  const daysLaterMatch = text.match(/(\d+)일\s*(후|뒤)\s*부터/);
+  if (daysLaterMatch) {
+    const daysLater = new Date(today);
+    daysLater.setDate(today.getDate() + parseInt(daysLaterMatch[1]));
+    return daysLater;
+  }
+
+  // "다음주부터", "다음 주부터" 패턴
+  if (text.includes("다음주부터") || text.includes("다음 주부터") || text.includes("다음주 부터")) {
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+    return nextWeek;
+  }
+
+  // "이번주부터", "이번 주부터" 패턴
+  if (text.includes("이번주부터") || text.includes("이번 주부터") || text.includes("이번주 부터")) {
+    return today;
+  }
+
+  // "오늘부터" 패턴
+  if (text.includes("오늘부터") || text.includes("오늘 부터")) {
+    return today;
+  }
+
+  // 일반 "내일", "모레" 등 (부터 없이)
+  if (text.match(/내일\s*\d+일/)) {
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    return tomorrow;
+  }
+
+  if (text.match(/모레\s*\d+일/)) {
+    const dayAfterTomorrow = new Date(today);
+    dayAfterTomorrow.setDate(today.getDate() + 2);
+    return dayAfterTomorrow;
+  }
+
+  // 기본값: 오늘
+  return today;
+}
+
+/**
  * AI 채팅 메시지에서 여행 계획 정보를 추출
  */
 export function extractTravelPlanInfo(messages: UIMessage[]) {
@@ -65,11 +141,15 @@ export function extractTravelPlanInfo(messages: UIMessage[]) {
   if (conversationText.includes("액티비티") || conversationText.includes("활동")) styles.push("액티비티");
   if (styles.length === 0) styles.push("문화", "관광");
 
+  // 시작 날짜 파싱
+  const startDate = parseStartDate(conversationText);
+
   return {
     destination,
     duration,
     budget,
     styles,
+    startDate,
   };
 }
 
